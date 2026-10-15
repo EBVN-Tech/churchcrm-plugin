@@ -1,9 +1,9 @@
 # People Sync — plugin ChurchCRM
 
-Plugin communautaire privé pour ChurchCRM 7.8.0 ou plus. Il expose sous
+Plugin communautaire pour ChurchCRM 7.8.0 ou plus. Il expose sous
 `/plugins/people-sync/` les routes d'écriture des personnes et familles que
-l'API ChurchCRM ne fournit pas, pour l'intranet de l'Église Baptiste Vie
-Nouvelle. Les routes sont authentifiées par l'en-tête `x-api-key`.
+l'API ChurchCRM ne fournit pas, pour une application externe (intranet,
+outil de synchronisation). Les routes sont authentifiées par l'en-tête `x-api-key`.
 
 Version 0.2.0 : routes de test seulement, aucune écriture en base.
 
@@ -16,7 +16,7 @@ Version 0.2.0 : routes de test seulement, aucune écriture en base.
 
 Admin → Plugins → installation par URL, avec l'URL du zip de la release,
 son SHA-256 (indiqué dans la release) et l'id `people-sync`. ChurchCRM marque
-le plugin « unverified » : c'est normal pour un plugin privé.
+le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
 
 ## Construire le zip
 

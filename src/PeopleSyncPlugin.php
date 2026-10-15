@@ -40,7 +40,7 @@ class PeopleSyncPlugin extends AbstractPlugin
 
     public function getDescription(): string
     {
-        return 'Routes d\'écriture des personnes et familles pour l\'intranet EBVN.';
+        return 'Routes d\'écriture des personnes et familles pour une application externe.';
     }
 
     public function getVersion(): string
