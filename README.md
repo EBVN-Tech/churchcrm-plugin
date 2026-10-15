@@ -5,17 +5,24 @@ Plugin communautaire pour ChurchCRM 7.8.0 ou plus. Il expose sous
 l'API ChurchCRM ne fournit pas, pour une application externe (intranet,
 outil de synchronisation). Les routes sont authentifiées par l'en-tête `x-api-key`.
 
-Version 0.2.0 : routes de test seulement, aucune écriture en base.
+Version 0.3.0. Spécification complète : [`docs/SPEC.md`](docs/SPEC.md).
 
-| Méthode | Route | Rôle exigé | Réponse |
-|---|---|---|---|
-| `GET` | `/plugins/people-sync/ping` | aucun (clé valide) | utilisateur authentifié et droit EditRecords |
-| `POST` | `/plugins/people-sync/echo` | EditRecords | noms des clés JSON reçues, jamais les valeurs |
+| Méthode | Route | Rôle |
+|---|---|---|
+| `GET` | `/plugins/people-sync/ping` | vérifie l'installation et les réglages |
+| `POST` | `/plugins/people-sync/{person,family}` | crée une fiche (idempotent par `externalId`) |
+| `PATCH` | `/plugins/people-sync/{person,family}/{id}` | modifie les champs envoyés |
+| `GET` | `/plugins/people-sync/{person,family}/{id}/custom` | lit les champs personnalisés autorisés |
+| `PATCH` | `/plugins/people-sync/{person,family}/{id}/custom` | écrit des champs personnalisés |
+
+Prérequis : un champ personnalisé nommé `ext-id` (texte 50, sécurité Admin)
+pour les personnes et un pour les familles.
 
 ## Installation
 
 Admin → Plugins → installation par URL, avec l'URL du zip de la release,
-son SHA-256 (indiqué dans la release) et l'id `people-sync`. ChurchCRM marque
+son SHA-256 (indiqué dans la release) et l'id `people-sync`. Pour changer
+de version : désinstaller l'ancienne, puis installer la nouvelle. ChurchCRM marque
 le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
 
 ## Construire le zip

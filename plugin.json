@@ -1,8 +1,8 @@
 {
     "id": "people-sync",
     "name": "People Sync",
-    "description": "Routes d'écriture des personnes et familles pour une application externe. Version de test : vérifie seulement qu'un plugin peut exposer des routes authentifiées par x-api-key.",
-    "version": "0.2.0",
+    "description": "Routes d'écriture des personnes et familles pour une application externe : création idempotente, modification partielle, champs personnalisés.",
+    "version": "0.3.0",
     "author": "People Sync",
     "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin-people-sync",
     "type": "community",
@@ -11,7 +11,22 @@
     "dependencies": [],
     "settingsUrl": null,
     "routesFile": "routes/routes.php",
-    "settings": [],
+    "settings": [
+        {
+            "key": "personExternalIdField",
+            "label": "Champ d'identifiant externe (personnes)",
+            "type": "text",
+            "required": false,
+            "help": "Nom du champ personnalisé de personne qui reçoit l'identifiant externe. Vide : ext-id."
+        },
+        {
+            "key": "familyExternalIdField",
+            "label": "Champ d'identifiant externe (familles)",
+            "type": "text",
+            "required": false,
+            "help": "Nom du champ personnalisé de famille qui reçoit l'identifiant externe. Vide : ext-id."
+        }
+    ],
     "menuItems": [],
     "hooks": [],
     "hasTest": false
