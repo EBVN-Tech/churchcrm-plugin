@@ -1,21 +1,21 @@
 <?php
 
-namespace ChurchCRM\Plugins\EbvnSync;
+namespace ChurchCRM\Plugins\PeopleSync;
 
 use ChurchCRM\Plugin\AbstractPlugin;
 
 /**
- * Plugin EBVN Sync.
+ * Plugin People Sync.
  *
- * Expose sous /plugins/ebvn-sync/ les routes d'écriture absentes de l'API
+ * Expose sous /plugins/people-sync/ les routes d'écriture absentes de l'API
  * ChurchCRM 7.8.0 (création et modification de personnes, familles et
  * champs personnalisés), appelées par l'intranet avec x-api-key.
  *
- * Version 0.1.0 : routes de test seulement, aucune écriture en base.
+ * Version 0.2.0 : routes de test seulement, aucune écriture en base.
  */
-class EbvnSyncPlugin extends AbstractPlugin
+class PeopleSyncPlugin extends AbstractPlugin
 {
-    private static ?EbvnSyncPlugin $instance = null;
+    private static ?PeopleSyncPlugin $instance = null;
 
     public function __construct(string $basePath = '')
     {
@@ -23,19 +23,19 @@ class EbvnSyncPlugin extends AbstractPlugin
         self::$instance = $this;
     }
 
-    public static function getInstance(): ?EbvnSyncPlugin
+    public static function getInstance(): ?PeopleSyncPlugin
     {
         return self::$instance;
     }
 
     public function getId(): string
     {
-        return 'ebvn-sync';
+        return 'people-sync';
     }
 
     public function getName(): string
     {
-        return 'EBVN Sync';
+        return 'People Sync';
     }
 
     public function getDescription(): string
@@ -45,7 +45,7 @@ class EbvnSyncPlugin extends AbstractPlugin
 
     public function getVersion(): string
     {
-        return '0.1.0';
+        return '0.2.0';
     }
 
     public function boot(): void
