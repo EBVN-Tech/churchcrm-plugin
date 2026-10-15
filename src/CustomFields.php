@@ -109,9 +109,12 @@ class CustomFields
         );
         $stmt = $con->prepare($sql);
         $stmt->execute([$externalId]);
-        $id = $stmt->fetchColumn();
+        // fetch() plutôt que fetchColumn() : selon le pilote, une recherche
+        // vide renvoie false ou null, et (int) null vaudrait 0.
+        $row = $stmt->fetch(\PDO::FETCH_NUM);
+        $id = is_array($row) ? (int) $row[0] : 0;
 
-        return $id === false ? null : (int) $id;
+        return $id > 0 ? $id : null;
     }
 
     /**

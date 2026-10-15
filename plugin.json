@@ -2,7 +2,7 @@
     "id": "people-sync",
     "name": "People Sync",
     "description": "Routes d'écriture des personnes et familles pour une application externe : création idempotente, modification partielle, champs personnalisés.",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "author": "People Sync",
     "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin-people-sync",
     "type": "community",

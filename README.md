@@ -5,7 +5,7 @@ Plugin communautaire pour ChurchCRM 7.8.0 ou plus. Il expose sous
 l'API ChurchCRM ne fournit pas, pour une application externe (intranet,
 outil de synchronisation). Les routes sont authentifiées par l'en-tête `x-api-key`.
 
-Version 0.3.0. Spécification complète : [`docs/SPEC.md`](docs/SPEC.md).
+Version 0.3.1. Spécification complète : [`docs/SPEC.md`](docs/SPEC.md).
 
 | Méthode | Route | Rôle |
 |---|---|---|
