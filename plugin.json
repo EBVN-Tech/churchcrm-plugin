@@ -1,0 +1,18 @@
+{
+    "id": "ebvn-sync",
+    "name": "EBVN Sync",
+    "description": "Routes d'écriture des personnes et familles pour l'intranet EBVN. Version de test : vérifie seulement qu'un plugin peut exposer des routes authentifiées par x-api-key.",
+    "version": "0.1.0",
+    "author": "EBVN",
+    "authorUrl": "https://ebvn.fr",
+    "type": "community",
+    "minimumCRMVersion": "7.8.0",
+    "mainClass": "ChurchCRM\\Plugins\\EbvnSync\\EbvnSyncPlugin",
+    "dependencies": [],
+    "settingsUrl": null,
+    "routesFile": "routes/routes.php",
+    "settings": [],
+    "menuItems": [],
+    "hooks": [],
+    "hasTest": false
+}
