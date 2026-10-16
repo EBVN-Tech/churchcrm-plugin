@@ -1,4 +1,4 @@
-# Spécification des routes — People Sync 0.6.0
+# Spécification des routes — People Sync 0.6.1
 
 Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
 
@@ -92,7 +92,7 @@ fiches. L'application appelante envoie ses créations une par une.
 
 ### `GET /ping`
 
-Depuis 0.6.0, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
+Depuis 0.6.1, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
 
 Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
 `configured`, `configurationError`, `excludedGroup` (nom réglé) et
@@ -307,7 +307,7 @@ en silence.
 | Besoin | Route |
 |---|---|
 | Activer ou désactiver une fiche | `POST /api/person/{id}/activate/{true\|false}`, idem `family` |
-| Refus de contact e-mail / SMS | Depuis 0.6.0 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
+| Refus de contact e-mail / SMS | Depuis 0.6.1 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
 | Lire une fiche | `GET /api/person/{id}`, `GET /api/family/{id}` |
 | Supprimer | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
 | Notes, photo | routes `note` et `photo` existantes |

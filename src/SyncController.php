@@ -3,6 +3,8 @@
 namespace ChurchCRM\Plugins\PeopleSync;
 
 use ChurchCRM\Authentication\AuthenticationManager;
+use ChurchCRM\model\ChurchCRM\EventAttendQuery;
+use ChurchCRM\model\ChurchCRM\EventQuery;
 use ChurchCRM\model\ChurchCRM\Family;
 use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\model\ChurchCRM\FamilyQuery;
