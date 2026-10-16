@@ -1,4 +1,4 @@
-# Spécification des routes — People Sync 0.7.0
+# Spécification des routes — People Sync 0.7.1
 
 Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
 
@@ -93,7 +93,7 @@ fiches. L'application appelante envoie ses créations une par une.
 
 ### `GET /ping`
 
-Depuis 0.7.0, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
+Depuis 0.7.1, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
 
 Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
 `configured`, `configurationError`, `excludedGroup` (nom réglé) et
@@ -234,7 +234,7 @@ routes font le minimum avec le droit « Add Event ».
 Champs : `title` (255, non vide), `typeId` (type existant), `start` et `end`
 (`AAAA-MM-JJ HH:MM:SS`, fin après début), `desc` (255), `text`, `active`
 (booléen). Création : les quatre premiers obligatoires. Modification :
-seulement les champs envoyés. Pas de HTML dans `desc` et `text`.
+seulement les champs envoyés. Pas de HTML dans `title`, `desc` et `text`.
 
 - `POST` → `201 { "success": true, "id": 12 }`
 - `PATCH` → `200 { "success": true, "id": 12 }`
@@ -242,7 +242,7 @@ seulement les champs envoyés. Pas de HTML dans `desc` et `text`.
   personnes sont encore pointées ou qu'un kiosque utilise l'événement.
 - `403` sans « Add Event », `404` introuvable, `422` validation.
 
-`/ping` indique `addEvent` depuis 0.7.0.
+`/ping` indique `addEvent` depuis 0.7.1.
 
 ### `GET /events/{id}/attendance`
 
@@ -327,7 +327,7 @@ en silence.
 | Besoin | Route |
 |---|---|
 | Activer ou désactiver une fiche | `POST /api/person/{id}/activate/{true\|false}`, idem `family` |
-| Refus de contact e-mail / SMS | Depuis 0.7.0 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
+| Refus de contact e-mail / SMS | Depuis 0.7.1 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
 | Lire une fiche | `GET /api/person/{id}`, `GET /api/family/{id}` |
 | Supprimer | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
 | Notes, photo | routes `note` et `photo` existantes |

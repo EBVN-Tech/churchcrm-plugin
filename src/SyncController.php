@@ -415,6 +415,8 @@ class SyncController
             $title = is_string($body['title']) ? trim($body['title']) : '';
             if ($title === '' || mb_strlen($title) > 255) {
                 $errors['title'] = 'texte non vide, 255 max';
+            } elseif ($title !== strip_tags($title)) {
+                $errors['title'] = 'balises HTML interdites';
             } else {
                 $values['title'] = $title;
             }
