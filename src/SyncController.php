@@ -275,6 +275,50 @@ class SyncController
         return [200, ['success' => true, 'listId' => $listId, 'count' => count($items), 'items' => $items]];
     }
 
+    /**
+     * Présences enregistrées sur un événement, hors groupe exclu. L'API
+     * ChurchCRM ne liste que les membres des groupes liés à l'événement
+     * (`/events/{id}/roster`) ; ici, toutes les personnes pointées.
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function eventAttendance(int $eventId): array
+    {
+        $event = EventQuery::create()->findPk($eventId);
+        if ($event === null) {
+            throw new HttpException(404, 'Événement introuvable');
+        }
+        $excluded = array_flip($this->requireExcludedPersonIds());
+
+        $items = [];
+        foreach (EventAttendQuery::create()->filterByEventId($eventId)->find() as $attendance) {
+            $personId = (int) $attendance->getPersonId();
+            if (isset($excluded[$personId])) {
+                continue;
+            }
+            $checkin = $attendance->getCheckinDate();
+            $checkout = $attendance->getCheckoutDate();
+            $items[] = [
+                'personId' => $personId,
+                'checkinDate' => $checkin === null ? null : $checkin->format('Y-m-d H:i:s'),
+                'checkoutDate' => $checkout === null ? null : $checkout->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        return [200, [
+            'success' => true,
+            'event' => [
+                'id' => (int) $event->getId(),
+                'title' => $event->getTitle(),
+                'start' => $event->getStart('Y-m-d H:i:s'),
+                'end' => $event->getEnd('Y-m-d H:i:s'),
+                'active' => (int) $event->getInActive() !== 1,
+            ],
+            'count' => count($items),
+            'items' => $items,
+        ]];
+    }
+
     private function currentUser(): User
     {
         return AuthenticationManager::getCurrentUser();

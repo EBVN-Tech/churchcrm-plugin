@@ -1,4 +1,4 @@
-# Spécification des routes — People Sync 0.5.0
+# Spécification des routes — People Sync 0.6.0
 
 Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
 
@@ -33,6 +33,7 @@ deviner une correspondance (par e-mail ou par nom).
 | `PATCH /person/{id}/custom`, `PATCH /family/{id}/custom` | EditRecords, plus la sécurité de chaque champ |
 | `PATCH /person/{id}/properties` | EditRecords |
 | `GET /lists/{id}` | aucun au-delà d'une clé valide |
+| `GET /events/{id}/attendance` | aucun au-delà d'une clé valide |
 
 La sécurité d'un champ personnalisé (`custom_FieldSec`) est un numéro
 d'option de la liste ChurchCRM 5 (`1` bAll, `2` bAdmin, `3` bAddRecords,
@@ -91,7 +92,7 @@ fiches. L'application appelante envoie ses créations une par une.
 
 ### `GET /ping`
 
-Depuis 0.5.0, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
+Depuis 0.6.0, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
 
 Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
 `configured`, `configurationError`, `excludedGroup` (nom réglé) et
@@ -223,6 +224,22 @@ l'application externe pour vérifier ses correspondances.
 
 `404` si la liste n'existe pas ou est vide.
 
+### `GET /events/{id}/attendance`
+
+Présences enregistrées sur un événement (`event_attend`), hors groupe exclu.
+`GET /api/events/{id}/roster` de ChurchCRM ne renvoie que les membres des
+groupes liés à l'événement ; cette route renvoie toutes les personnes
+pointées, par exemple par `POST /api/events/{id}/checkin` (droit « Add
+Event » dans ChurchCRM, module Événements activé).
+
+```json
+{ "success": true,
+  "event": { "id": 7, "title": "Culte", "start": "2026-10-18 10:30:00", "end": "2026-10-18 12:00:00", "active": true },
+  "count": 1, "items": [ { "personId": 12, "checkinDate": "2026-10-18 10:32:10", "checkoutDate": null } ] }
+```
+
+`404` si l'événement n'existe pas.
+
 ### `GET /person/{id}/custom` et `GET /family/{id}/custom`
 
 Champs que le compte a le droit de voir, sauf l'identifiant externe :
@@ -290,7 +307,7 @@ en silence.
 | Besoin | Route |
 |---|---|
 | Activer ou désactiver une fiche | `POST /api/person/{id}/activate/{true\|false}`, idem `family` |
-| Refus de contact e-mail / SMS | Depuis 0.5.0 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
+| Refus de contact e-mail / SMS | Depuis 0.6.0 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
 | Lire une fiche | `GET /api/person/{id}`, `GET /api/family/{id}` |
 | Supprimer | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
 | Notes, photo | routes `note` et `photo` existantes |

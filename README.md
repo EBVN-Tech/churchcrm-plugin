@@ -5,7 +5,7 @@ Plugin communautaire pour ChurchCRM 7.8.0 ou plus. Il expose sous
 l'API ChurchCRM ne fournit pas, pour une application externe (intranet,
 outil de synchronisation). Les routes sont authentifiées par l'en-tête `x-api-key`.
 
-Version 0.5.0 (ajoute `PATCH /person/{id}/properties` pour le refus de contact et `GET /lists/{id}` pour les options de listes). Spécification complète : [`docs/SPEC.md`](docs/SPEC.md).
+Version 0.6.0 (ajoute `GET /events/{id}/attendance` ; la 0.5.0 avait ajouté `PATCH /person/{id}/properties` et `GET /lists/{id}`). Spécification complète : [`docs/SPEC.md`](docs/SPEC.md).
 
 | Méthode | Route | Rôle |
 |---|---|---|

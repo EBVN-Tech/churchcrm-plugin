@@ -76,6 +76,11 @@ $app->get('/people-sync/lists/{id:[0-9]+}', function (Request $request, Response
     return $respond($request, $response, fn () => $controller->listOptions((int) $args['id']));
 });
 
+// Présences d'un événement (toutes les personnes pointées, pas seulement les groupes liés).
+$app->get('/people-sync/events/{id:[0-9]+}/attendance', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->eventAttendance((int) $args['id']));
+});
+
 // Propriétés « Ne pas contacter par e-mail / SMS » d'une personne.
 $app->patch('/people-sync/person/{id:[0-9]+}/properties', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->updateProperties((int) $args['id'], $request->getParsedBody()));
