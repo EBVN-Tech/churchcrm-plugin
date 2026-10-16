@@ -1,4 +1,4 @@
-# Spécification des routes — People Sync 0.6.1
+# Spécification des routes — People Sync 0.7.0
 
 Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
 
@@ -34,6 +34,7 @@ deviner une correspondance (par e-mail ou par nom).
 | `PATCH /person/{id}/properties` | EditRecords |
 | `GET /lists/{id}` | aucun au-delà d'une clé valide |
 | `GET /events/{id}/attendance` | aucun au-delà d'une clé valide |
+| `POST /events`, `PATCH /events/{id}`, `DELETE /events/{id}` | AddEvent |
 
 La sécurité d'un champ personnalisé (`custom_FieldSec`) est un numéro
 d'option de la liste ChurchCRM 5 (`1` bAll, `2` bAdmin, `3` bAddRecords,
@@ -92,7 +93,7 @@ fiches. L'application appelante envoie ses créations une par une.
 
 ### `GET /ping`
 
-Depuis 0.6.1, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
+Depuis 0.7.0, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
 
 Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
 `configured`, `configurationError`, `excludedGroup` (nom réglé) et
@@ -224,6 +225,25 @@ l'application externe pour vérifier ses correspondances.
 
 `404` si la liste n'existe pas ou est vide.
 
+### `POST /events`, `PATCH /events/{id}`, `DELETE /events/{id}`
+
+Événements du calendrier (`events_event`). L'API ChurchCRM 7.8.0 ne renvoie
+pas l'identifiant d'un événement créé et exige des champs annexes ; ces
+routes font le minimum avec le droit « Add Event ».
+
+Champs : `title` (255, non vide), `typeId` (type existant), `start` et `end`
+(`AAAA-MM-JJ HH:MM:SS`, fin après début), `desc` (255), `text`, `active`
+(booléen). Création : les quatre premiers obligatoires. Modification :
+seulement les champs envoyés. Pas de HTML dans `desc` et `text`.
+
+- `POST` → `201 { "success": true, "id": 12 }`
+- `PATCH` → `200 { "success": true, "id": 12 }`
+- `DELETE` → `200 { "success": true, "id": 12, "deleted": true }` ; `409` si des
+  personnes sont encore pointées ou qu'un kiosque utilise l'événement.
+- `403` sans « Add Event », `404` introuvable, `422` validation.
+
+`/ping` indique `addEvent` depuis 0.7.0.
+
 ### `GET /events/{id}/attendance`
 
 Présences enregistrées sur un événement (`event_attend`), hors groupe exclu.
@@ -307,7 +327,7 @@ en silence.
 | Besoin | Route |
 |---|---|
 | Activer ou désactiver une fiche | `POST /api/person/{id}/activate/{true\|false}`, idem `family` |
-| Refus de contact e-mail / SMS | Depuis 0.6.1 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
+| Refus de contact e-mail / SMS | Depuis 0.7.0 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
 | Lire une fiche | `GET /api/person/{id}`, `GET /api/family/{id}` |
 | Supprimer | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
 | Notes, photo | routes `note` et `photo` existantes |

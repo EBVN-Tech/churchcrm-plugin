@@ -47,7 +47,7 @@ class PeopleSyncPlugin extends AbstractPlugin
 
     public function getVersion(): string
     {
-        return '0.6.1';
+        return '0.7.0';
     }
 
     public function boot(): void

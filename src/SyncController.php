@@ -3,8 +3,11 @@
 namespace ChurchCRM\Plugins\PeopleSync;
 
 use ChurchCRM\Authentication\AuthenticationManager;
+use ChurchCRM\Exceptions\EventDeleteRefusedException;
 use ChurchCRM\model\ChurchCRM\EventAttendQuery;
 use ChurchCRM\model\ChurchCRM\EventQuery;
+use ChurchCRM\model\ChurchCRM\EventTypeQuery;
+use ChurchCRM\Service\EventService;
 use ChurchCRM\model\ChurchCRM\Family;
 use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\model\ChurchCRM\FamilyQuery;
@@ -275,6 +278,194 @@ class SyncController
         }
 
         return [200, ['success' => true, 'listId' => $listId, 'count' => count($items), 'items' => $items]];
+    }
+
+    /**
+     * Crée un événement du calendrier ChurchCRM et renvoie son identifiant
+     * (l'API de ChurchCRM 7.8.0 ne le renvoie pas). Droit « Add Event ».
+     *
+     * @param mixed $body
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function createEvent($body): array
+    {
+        $user = $this->currentUser();
+        if (!$user->isAddEventEnabled()) {
+            throw new HttpException(403, 'Droit AddEvent requis');
+        }
+        $values = $this->validateEvent($this->requireObject($body), true);
+        $type = EventTypeQuery::create()->findOneById($values['typeId']);
+        if ($type === null) {
+            throw new HttpException(422, 'Données invalides', ['typeId' => 'type d\'événement inconnu']);
+        }
+
+        $event = (new EventService())->createEvent($type, [
+            'title' => $values['title'],
+            'desc' => $values['desc'] ?? '',
+            'text' => $values['text'] ?? '',
+            'start' => $values['start'],
+            'end' => $values['end'],
+            'inactive' => isset($values['active']) ? ($values['active'] ? 0 : 1) : 0,
+        ]);
+
+        return [201, ['success' => true, 'id' => (int) $event->getId()]];
+    }
+
+    /**
+     * Modifie les champs envoyés d'un événement.
+     *
+     * @param mixed $body
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function updateEvent(int $eventId, $body): array
+    {
+        $user = $this->currentUser();
+        if (!$user->isAddEventEnabled()) {
+            throw new HttpException(403, 'Droit AddEvent requis');
+        }
+        $event = EventQuery::create()->findPk($eventId);
+        if ($event === null) {
+            throw new HttpException(404, 'Événement introuvable');
+        }
+        $values = $this->validateEvent($this->requireObject($body), false);
+        if (empty($values)) {
+            throw new HttpException(422, 'Aucun champ envoyé');
+        }
+        if (isset($values['typeId'])) {
+            $type = EventTypeQuery::create()->findOneById($values['typeId']);
+            if ($type === null) {
+                throw new HttpException(422, 'Données invalides', ['typeId' => 'type d\'événement inconnu']);
+            }
+            $event->setEventType($type);
+        }
+        if (isset($values['title'])) {
+            $event->setTitle($values['title']);
+        }
+        if (array_key_exists('desc', $values)) {
+            $event->setDesc($values['desc'] ?? '');
+        }
+        if (array_key_exists('text', $values)) {
+            $event->setText($values['text'] ?? '');
+        }
+        if (isset($values['start'])) {
+            $event->setStart($values['start']);
+        }
+        if (isset($values['end'])) {
+            $event->setEnd($values['end']);
+        }
+        if (isset($values['active'])) {
+            $event->setInActive($values['active'] ? 0 : 1);
+        }
+        $event->save();
+
+        return [200, ['success' => true, 'id' => $eventId]];
+    }
+
+    /**
+     * Supprime un événement, sauf si des personnes y sont encore pointées
+     * ou qu'un kiosque l'utilise (409, comme ChurchCRM).
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function deleteEvent(int $eventId): array
+    {
+        $user = $this->currentUser();
+        if (!$user->isAddEventEnabled()) {
+            throw new HttpException(403, 'Droit AddEvent requis');
+        }
+        $event = EventQuery::create()->findPk($eventId);
+        if ($event === null) {
+            throw new HttpException(404, 'Événement introuvable');
+        }
+        try {
+            (new EventService())->deleteEvent($event);
+        } catch (EventDeleteRefusedException $e) {
+            throw new HttpException(409, $e->getMessage());
+        }
+
+        return [200, ['success' => true, 'id' => $eventId, 'deleted' => true]];
+    }
+
+    /**
+     * Valide les champs d'un événement : title (255), typeId, start et end
+     * (« AAAA-MM-JJ HH:MM:SS », fin après début), desc (255), text, active.
+     *
+     * @param array<string, mixed> $body
+     *
+     * @return array<string, mixed>
+     */
+    private function validateEvent(array $body, bool $creating): array
+    {
+        $errors = [];
+        $values = [];
+        $known = ['title', 'typeId', 'start', 'end', 'desc', 'text', 'active'];
+        foreach (array_keys($body) as $key) {
+            if (!in_array($key, $known, true)) {
+                $errors[$key] = 'champ inconnu';
+            }
+        }
+        foreach (['title', 'typeId', 'start', 'end'] as $key) {
+            if ($creating && !array_key_exists($key, $body)) {
+                $errors[$key] = 'obligatoire';
+            }
+        }
+        if (array_key_exists('title', $body)) {
+            $title = is_string($body['title']) ? trim($body['title']) : '';
+            if ($title === '' || mb_strlen($title) > 255) {
+                $errors['title'] = 'texte non vide, 255 max';
+            } else {
+                $values['title'] = $title;
+            }
+        }
+        if (array_key_exists('typeId', $body)) {
+            if (!is_int($body['typeId']) || $body['typeId'] <= 0) {
+                $errors['typeId'] = 'entier positif';
+            } else {
+                $values['typeId'] = $body['typeId'];
+            }
+        }
+        foreach (['start', 'end'] as $key) {
+            if (!array_key_exists($key, $body)) {
+                continue;
+            }
+            $dt = is_string($body[$key]) ? \DateTime::createFromFormat('Y-m-d H:i:s', $body[$key]) : false;
+            if ($dt === false || $dt->format('Y-m-d H:i:s') !== $body[$key]) {
+                $errors[$key] = 'AAAA-MM-JJ HH:MM:SS attendu';
+            } else {
+                $values[$key] = $body[$key];
+            }
+        }
+        if (isset($values['start'], $values['end']) && $values['end'] <= $values['start']) {
+            $errors['end'] = 'doit être après le début';
+        }
+        foreach (['desc', 'text'] as $key) {
+            if (!array_key_exists($key, $body)) {
+                continue;
+            }
+            if ($body[$key] !== null && !is_string($body[$key])) {
+                $errors[$key] = 'texte attendu';
+            } elseif ($key === 'desc' && $body[$key] !== null && mb_strlen($body[$key]) > 255) {
+                $errors[$key] = '255 max';
+            } elseif ($body[$key] !== null && $body[$key] !== strip_tags($body[$key])) {
+                $errors[$key] = 'balises HTML interdites';
+            } else {
+                $values[$key] = $body[$key];
+            }
+        }
+        if (array_key_exists('active', $body)) {
+            if (!is_bool($body['active'])) {
+                $errors['active'] = 'true ou false attendu';
+            } else {
+                $values['active'] = $body['active'];
+            }
+        }
+        if (!empty($errors)) {
+            throw new HttpException(422, 'Données invalides', $errors);
+        }
+
+        return $values;
     }
 
     /**

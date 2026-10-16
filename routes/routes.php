@@ -62,6 +62,7 @@ $app->get('/people-sync/ping', function (Request $request, Response $response) u
         'userId' => (int) $user->getId(),
         'addRecords' => $user->isAddRecordsEnabled(),
         'editRecords' => $user->isEditRecordsEnabled(),
+        'addEvent' => $user->isAddEventEnabled(),
         'configured' => $plugin->isConfigured(),
         'configurationError' => $plugin->getConfigurationError(),
         'excludedGroup' => $plugin->getExcludedGroupName(),
@@ -74,6 +75,17 @@ $app->get('/people-sync/ping', function (Request $request, Response $response) u
 // Options d'une liste ChurchCRM (1 classification, 2 rôle familial…).
 $app->get('/people-sync/lists/{id:[0-9]+}', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->listOptions((int) $args['id']));
+});
+
+// Événements du calendrier : création (avec identifiant en retour), modification, suppression.
+$app->post('/people-sync/events', function (Request $request, Response $response) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->createEvent($request->getParsedBody()));
+});
+$app->patch('/people-sync/events/{id:[0-9]+}', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->updateEvent((int) $args['id'], $request->getParsedBody()));
+});
+$app->delete('/people-sync/events/{id:[0-9]+}', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->deleteEvent((int) $args['id']));
 });
 
 // Présences d'un événement (toutes les personnes pointées, pas seulement les groupes liés).
