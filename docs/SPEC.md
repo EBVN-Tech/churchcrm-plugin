@@ -1,4 +1,4 @@
-# Spécification des routes — People Sync 0.4.0
+# Spécification des routes — People Sync 0.5.0
 
 Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
 
@@ -31,6 +31,8 @@ deviner une correspondance (par e-mail ou par nom).
 | `PATCH /person/{id}`, `PATCH /family/{id}` | EditRecords |
 | `GET /person/{id}/custom`, `GET /family/{id}/custom` | sécurité de chaque champ |
 | `PATCH /person/{id}/custom`, `PATCH /family/{id}/custom` | EditRecords, plus la sécurité de chaque champ |
+| `PATCH /person/{id}/properties` | EditRecords |
+| `GET /lists/{id}` | aucun au-delà d'une clé valide |
 
 La sécurité d'un champ personnalisé (`custom_FieldSec`) est un numéro
 d'option de la liste ChurchCRM 5 (`1` bAll, `2` bAdmin, `3` bAddRecords,
@@ -88,6 +90,8 @@ fiches. L'application appelante envoie ses créations une par une.
 ## Routes
 
 ### `GET /ping`
+
+Depuis 0.5.0, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
 
 Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
 `configured`, `configurationError`, `excludedGroup` (nom réglé) et
@@ -188,6 +192,37 @@ la création.
 | `email` | `fam_Email` | e-mail valide, 100 max |
 | `weddingDate` | `fam_WeddingDate` | `AAAA-MM-JJ` ou `null` |
 
+### `PATCH /person/{id}/properties`
+
+Pose ou retire les propriétés « Ne pas contacter » réglées dans ChurchCRM
+(Admin → E-mail, `iDoNotEmailPropertyId` et `iDoNotSmsPropertyId`). L'API
+ChurchCRM équivalente (`/api/people/properties/…`) exige le droit « Menu
+Options » ; ici EditRecords suffit.
+
+Corps JSON : `{ "doNotEmail": true }`, `{ "doNotSms": false }` ou les deux.
+Valeurs booléennes seulement. Idempotent : poser une propriété déjà posée ou
+retirer une propriété absente ne change rien.
+
+- `422` : champ inconnu, valeur non booléenne, corps vide.
+- `503` : la propriété demandée n'est pas réglée dans ChurchCRM, ou l'id
+  réglé ne désigne pas une propriété de personne.
+
+Réponse `200` : `{ "success": true, "id": 123, "updated": ["doNotEmail"] }`.
+`DateLastEdited` / `EditedBy` de la fiche sont mis à jour.
+
+### `GET /lists/{id}`
+
+Options d'une liste ChurchCRM, triées par ordre d'affichage : `1`
+classification (`per_cls_ID`), `2` rôle familial (`per_fmr_ID`)… Sert à
+l'application externe pour vérifier ses correspondances.
+
+```json
+{ "success": true, "listId": 2, "count": 4, "items": [
+  { "id": 1, "name": "Head of Household", "sequence": 1 }, { "id": 2, "name": "Spouse", "sequence": 2 } ] }
+```
+
+`404` si la liste n'existe pas ou est vide.
+
 ### `GET /person/{id}/custom` et `GET /family/{id}/custom`
 
 Champs que le compte a le droit de voir, sauf l'identifiant externe :
@@ -255,7 +290,7 @@ en silence.
 | Besoin | Route |
 |---|---|
 | Activer ou désactiver une fiche | `POST /api/person/{id}/activate/{true\|false}`, idem `family` |
-| Refus de contact e-mail / SMS | Propriétés réglées dans `iDoNotEmailPropertyId` / `iDoNotSmsPropertyId`, via `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` |
+| Refus de contact e-mail / SMS | Depuis 0.5.0 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
 | Lire une fiche | `GET /api/person/{id}`, `GET /api/family/{id}` |
 | Supprimer | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
 | Notes, photo | routes `note` et `photo` existantes |

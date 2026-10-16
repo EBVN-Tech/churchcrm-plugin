@@ -1,8 +1,8 @@
 {
     "id": "people-sync",
     "name": "People Sync",
-    "description": "Routes d'écriture des personnes et familles pour une application externe : listes, création idempotente, modification partielle, champs personnalisés.",
-    "version": "0.4.0",
+    "description": "Routes d'écriture des personnes et familles pour une application externe : listes, création idempotente, modification partielle, champs personnalisés, propriétés de contact, options de listes.",
+    "version": "0.5.0",
     "author": "People Sync",
     "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin-people-sync",
     "type": "community",

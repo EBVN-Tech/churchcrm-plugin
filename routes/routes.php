@@ -6,6 +6,7 @@
 // par x-api-key avant d'arriver ici. Spécification : docs/SPEC.md.
 
 use ChurchCRM\Authentication\AuthenticationManager;
+use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\Plugins\PeopleSync\HttpException;
 use ChurchCRM\Plugins\PeopleSync\PeopleSyncPlugin;
 use ChurchCRM\Plugins\PeopleSync\SyncController;
@@ -65,7 +66,19 @@ $app->get('/people-sync/ping', function (Request $request, Response $response) u
         'configurationError' => $plugin->getConfigurationError(),
         'excludedGroup' => $plugin->getExcludedGroupName(),
         'excludedPersons' => count($plugin->getExcludedPersonIds() ?? []),
+        'doNotEmailPropertyId' => (int) SystemConfig::getValue('iDoNotEmailPropertyId') ?: null,
+        'doNotSmsPropertyId' => (int) SystemConfig::getValue('iDoNotSmsPropertyId') ?: null,
     ]);
+});
+
+// Options d'une liste ChurchCRM (1 classification, 2 rôle familial…).
+$app->get('/people-sync/lists/{id:[0-9]+}', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->listOptions((int) $args['id']));
+});
+
+// Propriétés « Ne pas contacter par e-mail / SMS » d'une personne.
+$app->patch('/people-sync/person/{id:[0-9]+}/properties', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->updateProperties((int) $args['id'], $request->getParsedBody()));
 });
 
 // Listes complètes, sans les membres du groupe exclu.

@@ -4,10 +4,15 @@ namespace ChurchCRM\Plugins\PeopleSync;
 
 use ChurchCRM\Authentication\AuthenticationManager;
 use ChurchCRM\model\ChurchCRM\Family;
+use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\model\ChurchCRM\FamilyQuery;
+use ChurchCRM\model\ChurchCRM\ListOptionQuery;
 use ChurchCRM\model\ChurchCRM\Map\PersonTableMap;
 use ChurchCRM\model\ChurchCRM\Person;
 use ChurchCRM\model\ChurchCRM\PersonQuery;
+use ChurchCRM\model\ChurchCRM\PropertyQuery;
+use ChurchCRM\model\ChurchCRM\RecordProperty;
+use ChurchCRM\model\ChurchCRM\RecordPropertyQuery;
 use ChurchCRM\model\ChurchCRM\User;
 use ChurchCRM\Utils\AddressDefaults;
 use Propel\Runtime\Propel;
@@ -167,6 +172,107 @@ class SyncController
         $items = $kind === 'person' ? RecordList::persons($excludedIds) : RecordList::families($excludedIds);
 
         return [200, ['success' => true, 'count' => count($items), 'items' => $items]];
+    }
+
+    /**
+     * Pose ou retire sur une personne les propriétés « Ne pas contacter »
+     * réglées dans ChurchCRM (iDoNotEmailPropertyId, iDoNotSmsPropertyId).
+     * L'API ChurchCRM équivalente exige le droit « Menu Options » ; ici,
+     * EditRecords suffit, comme pour les autres modifications de fiche.
+     *
+     * @param mixed $body
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function updateProperties(int $id, $body): array
+    {
+        $user = $this->currentUser();
+        if (!$user->isEditRecordsEnabled()) {
+            throw new HttpException(403, 'Droit EditRecords requis');
+        }
+        $body = $this->requireObject($body);
+        if (empty($body)) {
+            throw new HttpException(422, 'Aucun champ envoyé');
+        }
+        $record = $this->findRecord('person', $id);
+
+        $settings = ['doNotEmail' => 'iDoNotEmailPropertyId', 'doNotSms' => 'iDoNotSmsPropertyId'];
+        $errors = [];
+        $wanted = [];
+        foreach ($body as $key => $value) {
+            if (!isset($settings[$key])) {
+                $errors[$key] = 'champ inconnu';
+            } elseif (!is_bool($value)) {
+                $errors[$key] = 'true ou false attendu';
+            } else {
+                $wanted[$key] = $value;
+            }
+        }
+        if (!empty($errors)) {
+            throw new HttpException(422, 'Données invalides', $errors);
+        }
+
+        $propertyIds = [];
+        foreach ($wanted as $key => $value) {
+            $propertyId = (int) SystemConfig::getValue($settings[$key]);
+            $property = $propertyId > 0 ? PropertyQuery::create()->findPk($propertyId) : null;
+            if ($property === null || $property->getProClass() !== 'p') {
+                throw new HttpException(503, 'Propriété ' . $key . ' non réglée dans ChurchCRM (' . $settings[$key] . ')');
+            }
+            $propertyIds[$key] = $propertyId;
+        }
+
+        $con = Propel::getWriteConnection(PersonTableMap::DATABASE_NAME);
+        $con->beginTransaction();
+        try {
+            foreach ($wanted as $key => $value) {
+                $existing = RecordPropertyQuery::create()
+                    ->filterByRecordId($id)
+                    ->filterByPropertyId($propertyIds[$key])
+                    ->findOne($con);
+                if ($value && $existing === null) {
+                    $assignment = new RecordProperty();
+                    $assignment->setPropertyId($propertyIds[$key]);
+                    $assignment->setRecordId($id);
+                    $assignment->setPropertyValue('');
+                    $assignment->save($con);
+                } elseif (!$value && $existing !== null) {
+                    $existing->delete($con);
+                }
+            }
+            $record->setDateLastEdited(date('YmdHis'));
+            $record->setEditedBy($user->getId());
+            $record->save($con);
+            $con->commit();
+        } catch (\Throwable $e) {
+            $con->rollBack();
+            throw $e;
+        }
+
+        return [200, ['success' => true, 'id' => $id, 'updated' => array_keys($wanted)]];
+    }
+
+    /**
+     * Options d'une liste ChurchCRM (1 classification, 2 rôle familial…),
+     * pour que l'application externe vérifie ses correspondances.
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function listOptions(int $listId): array
+    {
+        $items = [];
+        foreach (ListOptionQuery::create()->filterById($listId)->orderByOptionSequence()->find() as $option) {
+            $items[] = [
+                'id' => (int) $option->getOptionId(),
+                'name' => $option->getOptionName(),
+                'sequence' => (int) $option->getOptionSequence(),
+            ];
+        }
+        if (empty($items)) {
+            throw new HttpException(404, 'Liste introuvable ou vide');
+        }
+
+        return [200, ['success' => true, 'listId' => $listId, 'count' => count($items), 'items' => $items]];
     }
 
     private function currentUser(): User
