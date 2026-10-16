@@ -1,8 +1,8 @@
 {
     "id": "people-sync",
     "name": "People Sync",
-    "description": "Routes d'écriture des personnes et familles pour une application externe : création idempotente, modification partielle, champs personnalisés.",
-    "version": "0.3.1",
+    "description": "Routes d'écriture des personnes et familles pour une application externe : listes, création idempotente, modification partielle, champs personnalisés.",
+    "version": "0.4.0",
     "author": "People Sync",
     "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin-people-sync",
     "type": "community",
@@ -25,6 +25,13 @@
             "type": "text",
             "required": false,
             "help": "Nom du champ personnalisé de famille qui reçoit l'identifiant externe. Vide : ext-id."
+        },
+        {
+            "key": "excludedGroupName",
+            "label": "Groupe exclu",
+            "type": "text",
+            "required": false,
+            "help": "Nom exact d'un groupe ChurchCRM dont les membres (comptes techniques…) ne sont jamais renvoyés ni modifiables. Vide : aucun."
         }
     ],
     "menuItems": [],

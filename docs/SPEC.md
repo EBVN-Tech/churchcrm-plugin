@@ -1,12 +1,12 @@
-# Spécification des routes — People Sync 0.3.0
+# Spécification des routes — People Sync 0.4.0
 
 Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
 
 ## Principe
 
 Le plugin ajoute seulement ce que l'API ChurchCRM ne sait pas faire :
-créer et modifier des personnes et des familles, lire et écrire leurs champs
-personnalisés. Tout le reste passe par l'API existante (voir « Hors plugin »).
+lister toutes les personnes et familles, les créer et les modifier, lire
+et écrire leurs champs personnalisés. Tout le reste passe par l'API existante (voir « Hors plugin »).
 
 Les écritures passent par les modèles Propel (`Person`, `Family`). Leur
 `save()` crée déjà les notes d'historique (`create`, `edit`) et déclenche
@@ -26,6 +26,7 @@ deviner une correspondance (par e-mail ou par nom).
 
 | Route | Droit exigé |
 |---|---|
+| `GET /persons`, `GET /families` | aucun au-delà d'une clé valide (ChurchCRM donne la lecture des fiches à tout compte) |
 | `POST /person`, `POST /family` | AddRecords |
 | `PATCH /person/{id}`, `PATCH /family/{id}` | EditRecords |
 | `GET /person/{id}/custom`, `GET /family/{id}/custom` | sécurité de chaque champ |
@@ -54,6 +55,7 @@ fait quoi.
 |---|---|---|
 | `personExternalIdField` | `ext-id` | Nom du champ personnalisé de personne qui reçoit l'identifiant externe |
 | `familyExternalIdField` | `ext-id` | Nom du champ personnalisé de famille qui reçoit l'identifiant externe |
+| `excludedGroupName` | vide | Nom exact d'un groupe ChurchCRM dont les membres (comptes techniques…) ne sont jamais renvoyés ni modifiables |
 
 Les deux champs sont à créer dans ChurchCRM (type « Text Field (50 char) »),
 avec une sécurité Admin pour qu'ils restent masqués. Le plugin les retrouve
@@ -61,6 +63,13 @@ par leur nom ; le nom doit être unique. Sinon `isConfigured()` renvoie
 `false` et les routes qui en dépendent répondent `503`. Renommer le champ
 dans ChurchCRM produit le même `503` : pas d'écriture sans identifiant
 externe.
+
+Groupe exclu : ses membres n'apparaissent dans aucune liste, et toute route
+qui les vise par leur `id` répond `404`. Une famille dont tous les membres
+sont exclus n'est pas listée. Si le groupe réglé n'existe pas (ou si deux
+groupes portent ce nom), les routes répondent `503` plutôt que de renvoyer
+des fiches qui auraient dû être masquées. Les réglages sont effacés à la
+désinstallation du plugin : les ressaisir après chaque mise à jour.
 
 ## Idempotence de la création
 
@@ -81,7 +90,34 @@ fiches. L'application appelante envoie ses créations une par une.
 ### `GET /ping`
 
 Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
-`configured` et `configurationError`.
+`configured`, `configurationError`, `excludedGroup` (nom réglé) et
+`excludedPersons` (nombre de personnes masquées).
+
+### `GET /persons`
+
+Toutes les personnes hors groupe exclu, triées par nom puis prénom. Pas de
+pagination : quelques centaines de fiches tiennent dans une réponse. Pas de
+champ personnalisé : l'IBAN se lit fiche par fiche via `…/custom`.
+
+```json
+{ "success": true, "count": 1, "items": [ {
+  "id": 12, "firstName": "Léa", "lastName": "Moreau", "familyId": 3,
+  "familyRoleId": 3, "classificationId": 1, "active": true,
+  "email": null, "cellPhone": null,
+  "birthDay": 2, "birthMonth": 5, "birthYear": 2019,
+  "doNotEmail": false, "doNotSms": false
+} ] }
+```
+
+`doNotEmail` / `doNotSms` : la personne porte la propriété réglée dans
+`iDoNotEmailPropertyId` / `iDoNotSmsPropertyId` de ChurchCRM (`false` si le
+réglage est vide).
+
+### `GET /families`
+
+Toutes les familles, triées par nom, avec `memberCount` (hors groupe exclu) :
+`id`, `name`, `address1`, `address2`, `zip`, `city`, `homePhone`, `email`,
+`active`, `memberCount`.
 
 ### `POST /person`
 

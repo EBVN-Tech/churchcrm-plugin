@@ -47,7 +47,7 @@ class PeopleSyncPlugin extends AbstractPlugin
 
     public function getVersion(): string
     {
-        return '0.3.1';
+        return '0.4.0';
     }
 
     public function boot(): void
@@ -66,6 +66,24 @@ class PeopleSyncPlugin extends AbstractPlugin
         return CustomFields::codeByName($kind, $name);
     }
 
+    /** Nom du groupe ChurchCRM dont les membres ne sont jamais renvoyés (vide : aucun). */
+    public function getExcludedGroupName(): string
+    {
+        return trim($this->getConfigValue('excludedGroupName'));
+    }
+
+    /**
+     * Personnes du groupe exclu (comptes techniques…), ou null si un groupe
+     * est réglé mais introuvable : dans ce cas, mieux vaut refuser de
+     * répondre que renvoyer des fiches qui auraient dû être masquées.
+     *
+     * @return int[]|null
+     */
+    public function getExcludedPersonIds(): ?array
+    {
+        return RecordList::groupMemberIds($this->getExcludedGroupName());
+    }
+
     public function isConfigured(): bool
     {
         return $this->getConfigurationError() === null;
@@ -73,6 +91,7 @@ class PeopleSyncPlugin extends AbstractPlugin
 
     public function getConfigurationError(): ?string
     {
+        $errors = [];
         $missing = [];
         if ($this->getExternalIdCode('person') === null) {
             $missing[] = 'personne';
@@ -80,11 +99,14 @@ class PeopleSyncPlugin extends AbstractPlugin
         if ($this->getExternalIdCode('family') === null) {
             $missing[] = 'famille';
         }
-        if (empty($missing)) {
-            return null;
+        if (!empty($missing)) {
+            $errors[] = 'Champ personnalisé d\'identifiant externe introuvable ou en double ('
+                . implode(', ', $missing) . ').';
+        }
+        if ($this->getExcludedPersonIds() === null) {
+            $errors[] = 'Groupe exclu introuvable ou en double.';
         }
 
-        return 'Champ personnalisé d\'identifiant externe introuvable ou en double ('
-            . implode(', ', $missing) . ').';
+        return empty($errors) ? null : implode(' ', $errors);
     }
 }

@@ -119,7 +119,8 @@ class SyncController
         $extCode = $this->requireExternalIdCode($kind);
         $con = Propel::getReadConnection(PersonTableMap::DATABASE_NAME);
 
-        return [200, ['success' => true, 'id' => $id, 'fields' => CustomFields::read($con, $kind, $id, $extCode, $user)]];
+        // (object) : {} et non [] quand aucun champ n'est lisible.
+        return [200, ['success' => true, 'id' => $id, 'fields' => (object) CustomFields::read($con, $kind, $id, $extCode, $user)]];
     }
 
     /**
@@ -155,6 +156,19 @@ class SyncController
         return [200, ['success' => true, 'id' => $id, 'updated' => array_keys($values)]];
     }
 
+    /**
+     * Liste complète des personnes ou des familles, sans le groupe exclu.
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function list(string $kind): array
+    {
+        $excludedIds = $this->requireExcludedPersonIds();
+        $items = $kind === 'person' ? RecordList::persons($excludedIds) : RecordList::families($excludedIds);
+
+        return [200, ['success' => true, 'count' => count($items), 'items' => $items]];
+    }
+
     private function currentUser(): User
     {
         return AuthenticationManager::getCurrentUser();
@@ -186,6 +200,21 @@ class SyncController
     }
 
     /**
+     * @return int[]
+     */
+    private function requireExcludedPersonIds(): array
+    {
+        $ids = $this->plugin->getExcludedPersonIds();
+        if ($ids === null) {
+            throw new HttpException(503, (string) $this->plugin->getConfigurationError());
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Une personne du groupe exclu est traitée comme introuvable.
+     *
      * @return Person|Family
      */
     private function findRecord(string $kind, int $id)
@@ -193,6 +222,9 @@ class SyncController
         $record = $kind === 'person'
             ? PersonQuery::create()->findPk($id)
             : FamilyQuery::create()->findPk($id);
+        if ($record !== null && $kind === 'person' && in_array($id, $this->requireExcludedPersonIds(), true)) {
+            $record = null;
+        }
         if ($record === null) {
             throw new HttpException(404, $kind === 'person' ? 'Personne introuvable' : 'Famille introuvable');
         }

@@ -63,7 +63,18 @@ $app->get('/people-sync/ping', function (Request $request, Response $response) u
         'editRecords' => $user->isEditRecordsEnabled(),
         'configured' => $plugin->isConfigured(),
         'configurationError' => $plugin->getConfigurationError(),
+        'excludedGroup' => $plugin->getExcludedGroupName(),
+        'excludedPersons' => count($plugin->getExcludedPersonIds() ?? []),
     ]);
+});
+
+// Listes complètes, sans les membres du groupe exclu.
+$app->get('/people-sync/persons', function (Request $request, Response $response) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->list('person'));
+});
+
+$app->get('/people-sync/families', function (Request $request, Response $response) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->list('family'));
 });
 
 foreach (['person', 'family'] as $kind) {
