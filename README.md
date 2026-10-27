@@ -28,8 +28,36 @@ plugins/<id>/        un plugin : plugin.json, routes/, src/, README.md, docs/
 scripts/build.sh     construit le zip d'un plugin
 ```
 
-Chaque plugin a sa version, dans son `plugin.json`. Une release porte le tag
-`<id>-v<version>`, par exemple `custom-routes-v0.8.1`.
+Chaque plugin a sa version, dans son `plugin.json`, et ses propres releases.
+
+## ✍️ Commits
+
+Les messages suivent [Conventional Commits](https://www.conventionalcommits.org/fr/v1.0.0/) :
+la version de chaque plugin en dépend. Type en anglais, description en français.
+
+| Type | Effet sur la version | Exemple |
+|---|---|---|
+| `fix:` | patch (0.8.0 → 0.8.1) | `fix: refuse le HTML dans le titre d'un événement` |
+| `feat:` | mineure (0.8.0 → 0.9.0) | `feat: route de suppression d'un événement` |
+| `feat!:` ou pied `BREAKING CHANGE:` | majeure (0.x : mineure) | `feat!: renomme l'id du plugin` |
+| `docs:`, `chore:`, `ci:`, `refactor:`, `test:` | aucune | `docs: précise les erreurs 503` |
+
+Une portée optionnelle nomme le plugin : `fix(custom-routes): …`. La version suit de toute
+façon les fichiers touchés, pas la portée. Fusion d'une PR : « Squash and merge », avec un
+titre de PR au même format.
+
+## 🚀 Releases
+
+[release-please](https://github.com/googleapis/release-please) les gère, plugin par plugin
+(`release-please-config.json`, `.release-please-manifest.json`) :
+
+1. À chaque push sur `main`, il ouvre ou met à jour une PR de release par plugin modifié par
+   un `fix:` ou un `feat:` : version montée dans `plugin.json` et le README, `CHANGELOG.md`.
+2. Fusionner cette PR crée le tag `<id>-v<version>` et la release.
+3. Le workflow construit alors le zip, l'attache à la release et écrit son SHA-256 dans les notes.
+
+Un plugin sans changement n'a pas de release. Ajouter un plugin : une entrée dans
+`packages` de `release-please-config.json`, et sa version actuelle dans le manifest.
 
 ## 📦 Construire un zip
 
@@ -38,7 +66,7 @@ scripts/build.sh <id>
 ```
 
 Le script produit `dist/<id>-<version>.zip`, avec un seul dossier racine `<id>` et sans
-fichier caché, README ni docs, puis affiche son SHA-256.
+fichier caché, README, CHANGELOG ni docs, puis affiche son SHA-256.
 
 ## Tests
 

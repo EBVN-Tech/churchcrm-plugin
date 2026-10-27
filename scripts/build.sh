@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Construit le zip d'un plugin : scripts/build.sh <id>
 # Produit dist/<id>-<version>.zip (un seul dossier racine <id>, aucun fichier caché,
-# ni README ni docs) et affiche son SHA-256.
+# ni README, CHANGELOG, version.txt ni docs) et affiche son SHA-256.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -22,7 +22,7 @@ version="$(json_value version)"
 zip="dist/$id-$version.zip"
 rm -rf "dist/$id" "$zip"
 mkdir -p "dist/$id"
-rsync -a --exclude '.*' --exclude 'README.md' --exclude 'docs/' "$src/" "dist/$id/"
+rsync -a --exclude '.*' --exclude 'README.md' --exclude 'CHANGELOG.md' --exclude 'version.txt' --exclude 'docs/' "$src/" "dist/$id/"
 (cd dist && zip -X -r -q "$id-$version.zip" "$id")
 rm -rf "dist/$id"
 

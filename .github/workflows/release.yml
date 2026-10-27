@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v4
+
+      - if: steps.release.outputs.releases_created == 'true'
+        uses: actions/checkout@v4
+
+      - name: Zip et SHA-256 des plugins publiés
+        if: steps.release.outputs.releases_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PATHS_RELEASED: ${{ steps.release.outputs.paths_released }}
+        run: |
+          for path in $(echo "$PATHS_RELEASED" | jq -r '.[]'); do
+            id="$(basename "$path")"
+            version="$(jq -r .version "$path/plugin.json")"
+            tag="$id-v$version"
+            sum="$(scripts/build.sh "$id" | cut -d ' ' -f 1)"
+            gh release upload "$tag" "dist/$id-$version.zip"
+            notes="$(gh release view "$tag" --json body --jq .body)"
+            gh release edit "$tag" --notes "$(printf 'Zip : `%s-%s.zip`\nSHA-256 : `%s`\nId : `%s`\n\n%s' "$id" "$version" "$sum" "$id" "$notes")"
+          done

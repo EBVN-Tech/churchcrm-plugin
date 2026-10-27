@@ -1,0 +1,23 @@
+{
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "bootstrap-sha": "daa99a039921209f259641bf64b08cd596d3a11c",
+    "release-type": "simple",
+    "include-component-in-tag": true,
+    "bump-minor-pre-major": true,
+    "packages": {
+        "plugins/custom-routes": {
+            "component": "custom-routes",
+            "extra-files": [
+                {
+                    "type": "json",
+                    "path": "plugin.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "generic",
+                    "path": "README.md"
+                }
+            ]
+        }
+    }
+}

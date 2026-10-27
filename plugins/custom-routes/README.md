@@ -8,7 +8,7 @@ Personnes, familles, champs personnalisés, événements et présences, sous
 `/plugins/custom-routes/`, pour une application externe (intranet, outil de synchronisation).
 On y ajoute une route quand un besoin apparaît.
 
-![Version](https://img.shields.io/badge/version-0.8.0-blue)
+![Version](https://img.shields.io/badge/version-0.8.0-blue) <!-- x-release-please-version -->
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
 [![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin?filter=custom-routes-*)](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes)
@@ -107,7 +107,8 @@ scripts/build.sh custom-routes
 ```
 
 Le script produit `dist/custom-routes-<version>.zip` (un seul dossier racine `custom-routes`,
-aucun fichier caché) et affiche son SHA-256. Le tag de la release est `custom-routes-v<version>`.
+aucun fichier caché) et affiche son SHA-256. Les releases sont automatiques : voir
+[« Releases »](../../README.md#-releases) à la racine du dépôt.
 
 Tests : `php -l` en PHP 8.4, puis des appels HTTP sur une instance de test (voir
 « Tests » dans la [spécification](docs/SPEC.md#tests)).
