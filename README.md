@@ -6,6 +6,7 @@
 
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml)
 
 </div>
@@ -93,3 +94,7 @@ CHURCHCRM_DIR=<folder>/churchcrm phpstan analyse
 ```
 
 Behavior tests are HTTP calls against a test instance: see each plugin's specification.
+
+## License
+
+[MIT](LICENSE).
