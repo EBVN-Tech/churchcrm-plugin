@@ -43,8 +43,10 @@ la version de chaque plugin en dépend. Type en anglais, description en françai
 | `docs:`, `chore:`, `ci:`, `refactor:`, `test:` | aucune | `docs: précise les erreurs 503` |
 
 Une portée optionnelle nomme le plugin : `fix(custom-routes): …`. La version suit de toute
-façon les fichiers touchés, pas la portée. Fusion d'une PR : « Squash and merge », avec un
-titre de PR au même format.
+façon les fichiers touchés, pas la portée.
+
+Seul « Squash and merge » est permis : le titre de la PR devient le message du commit sur
+`main`. Le workflow « Titre de PR » refuse un titre hors format.
 
 ## 🚀 Releases
 

@@ -1,0 +1,18 @@
+name: Titre de PR
+
+# Le titre de la PR devient le message du commit squashé : il doit suivre
+# Conventional Commits pour que release-please le prenne en compte.
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
