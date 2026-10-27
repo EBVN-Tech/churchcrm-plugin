@@ -46,11 +46,6 @@ class CustomRoutesPlugin extends AbstractPlugin
         return 'Custom routes that the ChurchCRM API does not provide, for an external application.';
     }
 
-    public function getVersion(): string
-    {
-        return '0.8.0';
-    }
-
     public function boot(): void
     {
     }
