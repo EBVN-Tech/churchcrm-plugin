@@ -4,7 +4,7 @@
     "description": "Routes sur mesure que l'API ChurchCRM ne fournit pas, pour une application externe : listes, création idempotente, modification partielle, champs personnalisés, propriétés de contact, options de listes, présences et gestion des événements.",
     "version": "0.8.0",
     "author": "Custom Routes",
-    "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin-custom-routes",
+    "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin",
     "type": "community",
     "minimumCRMVersion": "7.8.0",
     "mainClass": "ChurchCRM\\Plugins\\CustomRoutes\\CustomRoutesPlugin",

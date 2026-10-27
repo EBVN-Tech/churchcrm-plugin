@@ -1,114 +1,77 @@
 <div align="center">
 
-# 🧩 Custom Routes
+# 🧩 Plugins ChurchCRM
 
-**Plugin ChurchCRM : les routes sur mesure que l'API ne fournit pas.**
+**Les plugins ChurchCRM d'EBVN, un dossier par plugin.**
 
-Personnes, familles, champs personnalisés, événements et présences, sous
-`/plugins/custom-routes/`, pour une application externe (intranet, outil de synchronisation).
-On y ajoute une route quand un besoin apparaît.
-
-![Version](https://img.shields.io/badge/version-0.8.0-blue)
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
-[![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin-custom-routes)](https://github.com/EBVN-Tech/churchcrm-plugin-custom-routes/releases/latest)
-
-[Démarrage rapide](#-démarrage-rapide) · [Routes](#-routes) · [Réglages](#%EF%B8%8F-réglages) · [Mise à jour](#-mise-à-jour) · [Construire le zip](#-construire-le-zip) · [Spécification](docs/SPEC.md)
+[![CI](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml)
 
 </div>
 
 ---
 
-## Pourquoi
+## Plugins
 
-L'API de ChurchCRM 7.8.0 lit les fiches, mais ne sait ni les lister toutes, ni les créer,
-ni les modifier depuis une application externe. Custom Routes ajoute ce qui manque, au fil des besoins :
-
-| | |
-|---|---|
-| 🔁 **Création idempotente** | `POST` exige un `externalId` : relancer après une coupure ne crée pas de doublon. |
-| ✏️ **Modification partielle** | `PATCH` n'écrit que les champs envoyés. Un champ inconnu donne `422`, jamais un oubli silencieux. |
-| 🔐 **Droits de ChurchCRM** | Clé `x-api-key`, droits du compte de la clé, sécurité de chaque champ personnalisé. |
-| 🙈 **Groupe exclu** | Les comptes techniques d'un groupe réglé ne sont jamais renvoyés ni modifiables. |
-| 🧾 **Historique conservé** | Les écritures passent par les modèles Propel : notes d'historique et hooks de ChurchCRM inclus, jamais de SQL direct. |
-
-## 🚀 Démarrage rapide
-
-**1. Créer les champs d'identifiant externe.** Dans ChurchCRM, un champ personnalisé nommé
-`ext-id` (« Text Field (50 char) », sécurité Admin) pour les personnes, et un pour les familles.
-
-**2. Installer.** Admin → Plugins → installation par URL, avec :
-
-- l'URL du zip de la [dernière release](https://github.com/EBVN-Tech/churchcrm-plugin-custom-routes/releases/latest) ;
-- son SHA-256, indiqué dans la release ;
-- l'id `custom-routes`.
-
-ChurchCRM marque le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
-
-**3. Vérifier**, avec la clé API du compte de service :
-
-```bash
-curl -H "x-api-key: <clé>" https://<churchcrm>/plugins/custom-routes/ping
-```
-
-## 🧭 Routes
-
-Base : `/plugins/custom-routes`. Détail des champs, réponses et erreurs : [`docs/SPEC.md`](docs/SPEC.md).
-
-| Méthode | Route | Rôle | Droit exigé |
-|---|---|---|---|
-| `GET` | `/ping` | vérifie l'installation et les réglages | clé valide |
-| `GET` | `/{persons,families}` | listes complètes, hors groupe exclu | clé valide |
-| `POST` | `/{person,family}` | crée une fiche (idempotent par `externalId`) | AddRecords |
-| `PATCH` | `/{person,family}/{id}` | modifie les champs envoyés | EditRecords |
-| `GET` | `/{person,family}/{id}/custom` | lit les champs personnalisés autorisés | sécurité de chaque champ |
-| `PATCH` | `/{person,family}/{id}/custom` | écrit des champs personnalisés | EditRecords + sécurité de chaque champ |
-| `PATCH` | `/person/{id}/properties` | pose ou retire « Ne pas contacter » (e-mail, SMS) | EditRecords |
-| `GET` | `/lists/{id}` | options d'une liste ChurchCRM (classification, rôle familial…) | clé valide |
-| `POST` | `/events` | crée un événement | Add Event |
-| `PATCH` | `/events/{id}` | modifie un événement | Add Event |
-| `DELETE` | `/events/{id}` | supprime un événement sans présence | Add Event |
-| `GET` | `/events/{id}/attendance` | présences d'un événement, hors groupe exclu | clé valide |
-
-Lire, activer ou supprimer une fiche, les notes et la photo restent dans l'API ChurchCRM
-existante (voir « Hors plugin » dans la [spécification](docs/SPEC.md#hors-plugin--api-churchcrm-existante)).
-
-## ⚙️ Réglages
-
-| Clé | Par défaut | Rôle |
+| Plugin | Id | Rôle |
 |---|---|---|
-| `personExternalIdField` | `ext-id` | champ personnalisé de personne qui reçoit l'identifiant externe |
-| `familyExternalIdField` | `ext-id` | champ personnalisé de famille qui reçoit l'identifiant externe |
-| `excludedGroupName` | vide | groupe dont les membres ne sont jamais renvoyés ni modifiables |
+| [Custom Routes](plugins/custom-routes/README.md) | `custom-routes` | routes sur mesure que l'API ChurchCRM ne fournit pas, pour une application externe |
 
-Un champ ou un groupe introuvable, ou en double, fait répondre `503` aux routes qui en
-dépendent : pas d'écriture sans identifiant externe, pas de fiche qui aurait dû être masquée.
+Chaque plugin s'installe séparément : Admin → Plugins → installation par URL, avec l'URL
+du zip de sa release et son SHA-256. Voir le README du plugin.
 
-## 🔼 Mise à jour
+## Organisation
 
-L'installeur de ChurchCRM n'écrase jamais un plugin installé : désinstaller l'ancienne
-version, puis installer la nouvelle par URL avec son SHA-256.
-
-> ⚠️ La désinstallation efface les réglages du plugin : les ressaisir après chaque mise à jour.
-
-**Depuis `people-sync` (0.7.1 et avant).** Le plugin s'appelait People Sync. Le nouvel id
-fait de `custom-routes` un autre plugin pour ChurchCRM, et change l'URL de base des routes :
-
-1. installer `custom-routes` et ressaisir ses réglages ;
-2. remplacer `/plugins/people-sync` par `/plugins/custom-routes` dans l'application appelante ;
-3. désinstaller `people-sync`.
-
-## 📦 Construire le zip
-
-Le zip doit contenir un seul dossier racine nommé comme l'id du plugin, et
-aucun fichier caché :
-
-```bash
-mkdir -p dist/custom-routes
-cp -R plugin.json routes src dist/custom-routes/
-(cd dist && zip -X -r -q custom-routes-<version>.zip custom-routes)
-shasum -a 256 dist/custom-routes-<version>.zip
+```
+plugins/<id>/        un plugin : plugin.json, routes/, src/, README.md, docs/
+scripts/build.sh     construit le zip d'un plugin
 ```
 
-Tests : `php -l` en PHP 8.4, puis des appels HTTP sur une instance de test (voir
-« Tests » dans la [spécification](docs/SPEC.md#tests)).
+Chaque plugin a sa version, dans son `plugin.json`, et ses propres releases.
+
+## ✍️ Commits
+
+Les messages suivent [Conventional Commits](https://www.conventionalcommits.org/fr/v1.0.0/) :
+la version de chaque plugin en dépend. Type en anglais, description en français.
+
+| Type | Effet sur la version | Exemple |
+|---|---|---|
+| `fix:` | patch (0.8.0 → 0.8.1) | `fix: refuse le HTML dans le titre d'un événement` |
+| `feat:` | mineure (0.8.0 → 0.9.0) | `feat: route de suppression d'un événement` |
+| `feat!:` ou pied `BREAKING CHANGE:` | majeure (0.x : mineure) | `feat!: renomme l'id du plugin` |
+| `docs:`, `chore:`, `ci:`, `refactor:`, `test:` | aucune | `docs: précise les erreurs 503` |
+
+Une portée optionnelle nomme le plugin : `fix(custom-routes): …`. La version suit de toute
+façon les fichiers touchés, pas la portée.
+
+Seul « Squash and merge » est permis : le titre de la PR devient le message du commit sur
+`main`. Le workflow « Titre de PR » refuse un titre hors format.
+
+## 🚀 Releases
+
+[release-please](https://github.com/googleapis/release-please) les gère, plugin par plugin
+(`release-please-config.json`, `.release-please-manifest.json`) :
+
+1. À chaque push sur `main`, il ouvre ou met à jour une PR de release par plugin modifié par
+   un `fix:` ou un `feat:` : version montée dans `plugin.json` et le README, `CHANGELOG.md`.
+2. Fusionner cette PR crée le tag `<id>-v<version>` et la release.
+3. Le workflow construit alors le zip, l'attache à la release et écrit son SHA-256 dans les notes.
+
+Un plugin sans changement n'a pas de release. Ajouter un plugin : une entrée dans
+`packages` de `release-please-config.json`, et sa version actuelle dans le manifest.
+
+## 📦 Construire un zip
+
+```bash
+scripts/build.sh <id>
+```
+
+Le script produit `dist/<id>-<version>.zip`, avec un seul dossier racine `<id>` et sans
+fichier caché, README, CHANGELOG ni docs, puis affiche son SHA-256.
+
+## Tests
+
+La CI vérifie la syntaxe de chaque fichier PHP en 8.4 (`php -l`) et construit le zip de
+chaque plugin. Les tests de comportement se font par appels HTTP sur une instance de test :
+voir la spécification de chaque plugin.
