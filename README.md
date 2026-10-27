@@ -95,6 +95,10 @@ CHURCHCRM_DIR=<folder>/churchcrm phpstan analyse
 
 Behavior tests are HTTP calls against a test instance: see each plugin's specification.
 
+## Security
+
+Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
+
 ## License
 
 [MIT](LICENSE).
