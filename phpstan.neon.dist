@@ -1,0 +1,8 @@
+# Analyse les plugins avec le code de ChurchCRM : CHURCHCRM_DIR pointe vers le
+# dossier churchcrm du zip de release (voir « Tests » dans le README).
+parameters:
+    level: 6
+    paths:
+        - plugins
+    bootstrapFiles:
+        - %env.CHURCHCRM_DIR%/vendor/autoload.php

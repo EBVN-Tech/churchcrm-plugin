@@ -15,6 +15,8 @@ use ChurchCRM\Utils\LoggerUtils;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+/** @var \Slim\App<\Psr\Container\ContainerInterface|null> $app */
+
 $plugin = CustomRoutesPlugin::getInstance();
 if ($plugin === null) {
     return;
