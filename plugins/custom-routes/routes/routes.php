@@ -1,9 +1,9 @@
 <?php
 
-// Inclus par PluginManager::registerPluginRoutes() avec $app dans la portée.
-// Le basePath de l'application est /plugins : '/custom-routes/ping' répond
-// donc sur /plugins/custom-routes/ping. AuthMiddleware (global) authentifie
-// par x-api-key avant d'arriver ici. Spécification : docs/SPEC.md.
+// Included by PluginManager::registerPluginRoutes() with $app in scope.
+// The application basePath is /plugins: '/custom-routes/ping' therefore
+// answers on /plugins/custom-routes/ping. AuthMiddleware (global)
+// authenticates by x-api-key before reaching here. Specification: docs/SPEC.md.
 
 use ChurchCRM\Authentication\AuthenticationManager;
 use ChurchCRM\dto\SystemConfig;
@@ -24,10 +24,9 @@ if ($plugin === null) {
 $controller = new SyncController($plugin);
 
 /**
- * Exécute une action et met en forme la réponse JSON. Les logs ne
- * contiennent que la route, la méthode et le type d'erreur : jamais une
- * valeur reçue ni le message d'une exception (une erreur SQL peut citer
- * une valeur).
+ * Runs an action and formats the JSON response. Logs only contain the
+ * route, the method and the error type: never a received value nor the
+ * message of an exception (an SQL error may quote a value).
  */
 $respond = function (Request $request, Response $response, callable $action): Response {
     try {
@@ -42,18 +41,18 @@ $respond = function (Request $request, Response $response, callable $action): Re
 
         return SlimUtils::renderJSON($response, $body, $e->getStatus());
     } catch (\Throwable $e) {
-        LoggerUtils::getAppLogger()->error('custom-routes : erreur interne', [
+        LoggerUtils::getAppLogger()->error('custom-routes: internal error', [
             'path' => $request->getUri()->getPath(),
             'method' => $request->getMethod(),
             'exception' => get_class($e),
             'at' => basename($e->getFile()) . ':' . $e->getLine(),
         ]);
 
-        return SlimUtils::renderJSON($response, ['success' => false, 'error' => 'Erreur interne'], 500);
+        return SlimUtils::renderJSON($response, ['success' => false, 'error' => 'Internal error'], 500);
     }
 };
 
-// Vérifie l'installation : plugin chargé, compte reconnu, réglages valides.
+// Checks the installation: plugin loaded, account recognized, valid settings.
 $app->get('/custom-routes/ping', function (Request $request, Response $response) use ($plugin): Response {
     $user = AuthenticationManager::getCurrentUser();
 
@@ -74,12 +73,12 @@ $app->get('/custom-routes/ping', function (Request $request, Response $response)
     ]);
 });
 
-// Options d'une liste ChurchCRM (1 classification, 2 rôle familial…).
+// Options of a ChurchCRM list (1 classification, 2 family role…).
 $app->get('/custom-routes/lists/{id:[0-9]+}', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->listOptions((int) $args['id']));
 });
 
-// Événements du calendrier : création (avec identifiant en retour), modification, suppression.
+// Calendar events: creation (returning the ID), update, deletion.
 $app->post('/custom-routes/events', function (Request $request, Response $response) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->createEvent($request->getParsedBody()));
 });
@@ -90,17 +89,17 @@ $app->delete('/custom-routes/events/{id:[0-9]+}', function (Request $request, Re
     return $respond($request, $response, fn () => $controller->deleteEvent((int) $args['id']));
 });
 
-// Présences d'un événement (toutes les personnes pointées, pas seulement les groupes liés).
+// Attendance of an event (all checked-in persons, not only linked groups).
 $app->get('/custom-routes/events/{id:[0-9]+}/attendance', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->eventAttendance((int) $args['id']));
 });
 
-// Propriétés « Ne pas contacter par e-mail / SMS » d'une personne.
+// "Do not contact by email / SMS" properties of a person.
 $app->patch('/custom-routes/person/{id:[0-9]+}/properties', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->updateProperties((int) $args['id'], $request->getParsedBody()));
 });
 
-// Listes complètes, sans les membres du groupe exclu.
+// Full lists, without the members of the excluded group.
 $app->get('/custom-routes/persons', function (Request $request, Response $response) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->list('person'));
 });

@@ -1,7 +1,7 @@
-name: Titre de PR
+name: PR title
 
-# Le titre de la PR devient le message du commit squashé : il doit suivre
-# Conventional Commits pour que release-please le prenne en compte.
+# The PR title becomes the squashed commit message: it must follow
+# Conventional Commits for release-please to take it into account.
 on:
   pull_request_target:
     types: [opened, edited, reopened, synchronize]

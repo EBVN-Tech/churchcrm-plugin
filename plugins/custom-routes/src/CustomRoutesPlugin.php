@@ -5,17 +5,17 @@ namespace ChurchCRM\Plugins\CustomRoutes;
 use ChurchCRM\Plugin\AbstractPlugin;
 
 /**
- * Plugin Custom Routes.
+ * Custom Routes plugin.
  *
- * Expose sous /plugins/custom-routes/ des routes sur mesure, absentes de
- * l'API ChurchCRM 7.8.0 (personnes, familles, champs personnalisés,
- * événements, présences), appelées par une application externe avec
- * x-api-key. On y ajoute une route quand un besoin apparaît.
- * Spécification : docs/SPEC.md.
+ * Exposes under /plugins/custom-routes/ custom routes that are missing from
+ * the ChurchCRM 7.8.0 API (persons, families, custom fields, events,
+ * attendance), called by an external application with x-api-key.
+ * A route is added when a need arises.
+ * Specification: docs/SPEC.md.
  */
 class CustomRoutesPlugin extends AbstractPlugin
 {
-    /** Nom par défaut des champs personnalisés qui portent l'identifiant externe. */
+    /** Default name of the custom fields that hold the external ID. */
     private const DEFAULT_EXTERNAL_ID_FIELD = 'ext-id';
 
     private static ?CustomRoutesPlugin $instance = null;
@@ -43,7 +43,7 @@ class CustomRoutesPlugin extends AbstractPlugin
 
     public function getDescription(): string
     {
-        return 'Routes sur mesure que l\'API ChurchCRM ne fournit pas, pour une application externe.';
+        return 'Custom routes that the ChurchCRM API does not provide, for an external application.';
     }
 
     public function getVersion(): string
@@ -56,8 +56,8 @@ class CustomRoutesPlugin extends AbstractPlugin
     }
 
     /**
-     * Code (c1, c2…) du champ personnalisé qui porte l'identifiant externe,
-     * ou null s'il n'existe pas ou si plusieurs champs portent ce nom.
+     * Code (c1, c2…) of the custom field that holds the external ID,
+     * or null if it does not exist or if several fields have that name.
      */
     public function getExternalIdCode(string $kind): ?string
     {
@@ -67,16 +67,16 @@ class CustomRoutesPlugin extends AbstractPlugin
         return CustomFields::codeByName($kind, $name);
     }
 
-    /** Nom du groupe ChurchCRM dont les membres ne sont jamais renvoyés (vide : aucun). */
+    /** Name of the ChurchCRM group whose members are never returned (empty: none). */
     public function getExcludedGroupName(): string
     {
         return trim($this->getConfigValue('excludedGroupName'));
     }
 
     /**
-     * Personnes du groupe exclu (comptes techniques…), ou null si un groupe
-     * est réglé mais introuvable : dans ce cas, mieux vaut refuser de
-     * répondre que renvoyer des fiches qui auraient dû être masquées.
+     * Persons in the excluded group (technical accounts…), or null if a group
+     * is set but not found: in that case, refusing to answer is better than
+     * returning records that should have been hidden.
      *
      * @return int[]|null
      */
@@ -95,17 +95,17 @@ class CustomRoutesPlugin extends AbstractPlugin
         $errors = [];
         $missing = [];
         if ($this->getExternalIdCode('person') === null) {
-            $missing[] = 'personne';
+            $missing[] = 'person';
         }
         if ($this->getExternalIdCode('family') === null) {
-            $missing[] = 'famille';
+            $missing[] = 'family';
         }
         if (!empty($missing)) {
-            $errors[] = 'Champ personnalisé d\'identifiant externe introuvable ou en double ('
+            $errors[] = 'External ID custom field not found or duplicated ('
                 . implode(', ', $missing) . ').';
         }
         if ($this->getExcludedPersonIds() === null) {
-            $errors[] = 'Groupe exclu introuvable ou en double.';
+            $errors[] = 'Excluded group not found or duplicated.';
         }
 
         return empty($errors) ? null : implode(' ', $errors);

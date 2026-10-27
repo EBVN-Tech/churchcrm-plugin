@@ -2,113 +2,113 @@
 
 # 🧩 Custom Routes
 
-**Plugin ChurchCRM : les routes sur mesure que l'API ne fournit pas.**
+**ChurchCRM plugin: the custom routes the API does not provide.**
 
-Personnes, familles, champs personnalisés, événements et présences, sous
-`/plugins/custom-routes/`, pour une application externe (intranet, outil de synchronisation).
-On y ajoute une route quand un besoin apparaît.
+Persons, families, custom fields, events and attendance, under
+`/plugins/custom-routes/`, for an external application (intranet, sync tool).
+A route is added when a need arises.
 
 ![Version](https://img.shields.io/badge/version-0.8.0-blue) <!-- x-release-please-version -->
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
 [![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin?filter=custom-routes-*)](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes)
 
-[Démarrage rapide](#-démarrage-rapide) · [Routes](#-routes) · [Réglages](#%EF%B8%8F-réglages) · [Mise à jour](#-mise-à-jour) · [Construire le zip](#-construire-le-zip) · [Spécification](docs/SPEC.md)
+[Quick start](#-quick-start) · [Routes](#-routes) · [Settings](#%EF%B8%8F-settings) · [Upgrade](#-upgrade) · [Build the zip](#-build-the-zip) · [Specification](docs/SPEC.md)
 
 </div>
 
 ---
 
-## Pourquoi
+## Why
 
-L'API de ChurchCRM 7.8.0 lit les fiches, mais ne sait ni les lister toutes, ni les créer,
-ni les modifier depuis une application externe. Custom Routes ajoute ce qui manque, au fil des besoins :
+The ChurchCRM 7.8.0 API reads records, but cannot list them all, create them,
+or update them from an external application. Custom Routes adds what is missing, as needs arise:
 
 | | |
 |---|---|
-| 🔁 **Création idempotente** | `POST` exige un `externalId` : relancer après une coupure ne crée pas de doublon. |
-| ✏️ **Modification partielle** | `PATCH` n'écrit que les champs envoyés. Un champ inconnu donne `422`, jamais un oubli silencieux. |
-| 🔐 **Droits de ChurchCRM** | Clé `x-api-key`, droits du compte de la clé, sécurité de chaque champ personnalisé. |
-| 🙈 **Groupe exclu** | Les comptes techniques d'un groupe réglé ne sont jamais renvoyés ni modifiables. |
-| 🧾 **Historique conservé** | Les écritures passent par les modèles Propel : notes d'historique et hooks de ChurchCRM inclus, jamais de SQL direct. |
+| 🔁 **Idempotent creation** | `POST` requires an `externalId`: retrying after a network failure does not create a duplicate. |
+| ✏️ **Partial update** | `PATCH` only writes the fields sent. An unknown field gives `422`, never a silent omission. |
+| 🔐 **ChurchCRM permissions** | `x-api-key` key, permissions of the key's account, security of each custom field. |
+| 🙈 **Excluded group** | Technical accounts in a configured group are never returned or editable. |
+| 🧾 **History kept** | Writes go through the Propel models: ChurchCRM history notes and hooks included, never direct SQL. |
 
-## 🚀 Démarrage rapide
+## 🚀 Quick start
 
-**1. Créer les champs d'identifiant externe.** Dans ChurchCRM, un champ personnalisé nommé
-`ext-id` (« Text Field (50 char) », sécurité Admin) pour les personnes, et un pour les familles.
+**1. Create the external ID fields.** In ChurchCRM, a custom field named
+`ext-id` ("Text Field (50 char)", Admin security) for persons, and one for families.
 
-**2. Installer.** Admin → Plugins → installation par URL, avec :
+**2. Install.** Admin → Plugins → install from URL, with:
 
-- l'URL du zip de la [dernière release `custom-routes-v…`](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes) ;
-- son SHA-256, indiqué dans la release ;
-- l'id `custom-routes`.
+- the zip URL of the [latest `custom-routes-v…` release](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes);
+- its SHA-256, shown in the release;
+- the id `custom-routes`.
 
-ChurchCRM marque le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
+ChurchCRM marks the plugin "unverified": this is normal for a plugin that is not in the official registry.
 
-**3. Vérifier**, avec la clé API du compte de service :
+**3. Check**, with the service account's API key:
 
 ```bash
-curl -H "x-api-key: <clé>" https://<churchcrm>/plugins/custom-routes/ping
+curl -H "x-api-key: <key>" https://<churchcrm>/plugins/custom-routes/ping
 ```
 
 ## 🧭 Routes
 
-Base : `/plugins/custom-routes`. Détail des champs, réponses et erreurs : [`docs/SPEC.md`](docs/SPEC.md).
+Base: `/plugins/custom-routes`. Fields, responses and errors in detail: [`docs/SPEC.md`](docs/SPEC.md).
 
-| Méthode | Route | Rôle | Droit exigé |
+| Method | Route | Purpose | Required permission |
 |---|---|---|---|
-| `GET` | `/ping` | vérifie l'installation et les réglages | clé valide |
-| `GET` | `/{persons,families}` | listes complètes, hors groupe exclu | clé valide |
-| `POST` | `/{person,family}` | crée une fiche (idempotent par `externalId`) | AddRecords |
-| `PATCH` | `/{person,family}/{id}` | modifie les champs envoyés | EditRecords |
-| `GET` | `/{person,family}/{id}/custom` | lit les champs personnalisés autorisés | sécurité de chaque champ |
-| `PATCH` | `/{person,family}/{id}/custom` | écrit des champs personnalisés | EditRecords + sécurité de chaque champ |
-| `PATCH` | `/person/{id}/properties` | pose ou retire « Ne pas contacter » (e-mail, SMS) | EditRecords |
-| `GET` | `/lists/{id}` | options d'une liste ChurchCRM (classification, rôle familial…) | clé valide |
-| `POST` | `/events` | crée un événement | Add Event |
-| `PATCH` | `/events/{id}` | modifie un événement | Add Event |
-| `DELETE` | `/events/{id}` | supprime un événement sans présence | Add Event |
-| `GET` | `/events/{id}/attendance` | présences d'un événement, hors groupe exclu | clé valide |
+| `GET` | `/ping` | checks the installation and settings | valid key |
+| `GET` | `/{persons,families}` | full lists, excluding the excluded group | valid key |
+| `POST` | `/{person,family}` | creates a record (idempotent by `externalId`) | AddRecords |
+| `PATCH` | `/{person,family}/{id}` | updates the fields sent | EditRecords |
+| `GET` | `/{person,family}/{id}/custom` | reads the allowed custom fields | security of each field |
+| `PATCH` | `/{person,family}/{id}/custom` | writes custom fields | EditRecords + security of each field |
+| `PATCH` | `/person/{id}/properties` | sets or removes "Do not contact" (email, SMS) | EditRecords |
+| `GET` | `/lists/{id}` | options of a ChurchCRM list (classification, family role…) | valid key |
+| `POST` | `/events` | creates an event | Add Event |
+| `PATCH` | `/events/{id}` | updates an event | Add Event |
+| `DELETE` | `/events/{id}` | deletes an event with no attendance | Add Event |
+| `GET` | `/events/{id}/attendance` | attendance of an event, excluding the excluded group | valid key |
 
-Lire, activer ou supprimer une fiche, les notes et la photo restent dans l'API ChurchCRM
-existante (voir « Hors plugin » dans la [spécification](docs/SPEC.md#hors-plugin--api-churchcrm-existante)).
+Reading, activating or deleting a record, notes and photo stay in the existing ChurchCRM
+API (see "Outside the plugin" in the [specification](docs/SPEC.md#outside-the-plugin-existing-churchcrm-api)).
 
-## ⚙️ Réglages
+## ⚙️ Settings
 
-| Clé | Par défaut | Rôle |
+| Key | Default | Purpose |
 |---|---|---|
-| `personExternalIdField` | `ext-id` | champ personnalisé de personne qui reçoit l'identifiant externe |
-| `familyExternalIdField` | `ext-id` | champ personnalisé de famille qui reçoit l'identifiant externe |
-| `excludedGroupName` | vide | groupe dont les membres ne sont jamais renvoyés ni modifiables |
+| `personExternalIdField` | `ext-id` | person custom field that holds the external ID |
+| `familyExternalIdField` | `ext-id` | family custom field that holds the external ID |
+| `excludedGroupName` | empty | group whose members are never returned or editable |
 
-Un champ ou un groupe introuvable, ou en double, fait répondre `503` aux routes qui en
-dépendent : pas d'écriture sans identifiant externe, pas de fiche qui aurait dû être masquée.
+A field or group that is not found, or duplicated, makes the routes that depend on it
+answer `503`: no write without an external ID, no record that should have been hidden.
 
-## 🔼 Mise à jour
+## 🔼 Upgrade
 
-L'installeur de ChurchCRM n'écrase jamais un plugin installé : désinstaller l'ancienne
-version, puis installer la nouvelle par URL avec son SHA-256.
+The ChurchCRM installer never overwrites an installed plugin: uninstall the old
+version, then install the new one from its URL with its SHA-256.
 
-> ⚠️ La désinstallation efface les réglages du plugin : les ressaisir après chaque mise à jour.
+> ⚠️ Uninstalling erases the plugin settings: enter them again after each upgrade.
 
-**Depuis `people-sync` (0.7.1 et avant).** Le plugin s'appelait People Sync. Le nouvel id
-fait de `custom-routes` un autre plugin pour ChurchCRM, et change l'URL de base des routes :
+**Upgrade from `people-sync` (0.7.1 and earlier).** The plugin used to be called People Sync. The new id
+makes `custom-routes` a different plugin for ChurchCRM, and changes the base URL of the routes:
 
-1. installer `custom-routes` et ressaisir ses réglages ;
-2. remplacer `/plugins/people-sync` par `/plugins/custom-routes` dans l'application appelante ;
-3. désinstaller `people-sync`.
+1. install `custom-routes` and enter its settings again;
+2. replace `/plugins/people-sync` with `/plugins/custom-routes` in the calling application;
+3. uninstall `people-sync`.
 
-## 📦 Construire le zip
+## 📦 Build the zip
 
-Depuis la racine du dépôt :
+From the repository root:
 
 ```bash
 scripts/build.sh custom-routes
 ```
 
-Le script produit `dist/custom-routes-<version>.zip` (un seul dossier racine `custom-routes`,
-aucun fichier caché) et affiche son SHA-256. Les releases sont automatiques : voir
-[« Releases »](../../README.md#-releases) à la racine du dépôt.
+The script produces `dist/custom-routes-<version>.zip` (a single `custom-routes` root folder,
+no hidden files) and prints its SHA-256. Releases are automatic: see
+["Releases"](../../README.md#-releases) at the repository root.
 
-Tests : `php -l` en PHP 8.4, puis des appels HTTP sur une instance de test (voir
-« Tests » dans la [spécification](docs/SPEC.md#tests)).
+Tests: `php -l` with PHP 8.4, then HTTP calls on a test instance (see
+"Tests" in the [specification](docs/SPEC.md#tests)).

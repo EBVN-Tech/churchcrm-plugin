@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🧩 Plugins ChurchCRM
+# 🧩 ChurchCRM Plugins
 
-**Les plugins ChurchCRM d'EBVN, un dossier par plugin.**
+**ChurchCRM plugins, one folder per plugin.**
 
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
@@ -14,82 +14,82 @@
 
 ## Plugins
 
-| Plugin | Id | Rôle |
+| Plugin | Id | Purpose |
 |---|---|---|
-| [Custom Routes](plugins/custom-routes/README.md) | `custom-routes` | routes sur mesure que l'API ChurchCRM ne fournit pas, pour une application externe |
+| [Custom Routes](plugins/custom-routes/README.md) | `custom-routes` | custom routes the ChurchCRM API does not provide, for an external application |
 
-Chaque plugin s'installe séparément : Admin → Plugins → installation par URL, avec l'URL
-du zip de sa release et son SHA-256. Voir le README du plugin.
+Each plugin is installed separately: Admin → Plugins → install from URL, with the URL of
+its release zip and its SHA-256. See the plugin's README.
 
-## Organisation
+## Layout
 
 ```
-plugins/<id>/        un plugin : plugin.json, routes/, src/, README.md, docs/
-scripts/build.sh     construit le zip d'un plugin
-scripts/check-plugins.php   vérifie le plugin.json de chaque plugin
-phpstan.neon.dist    analyse statique des plugins
+plugins/<id>/               a plugin: plugin.json, routes/, src/, README.md, docs/
+scripts/build.sh            builds a plugin's zip
+scripts/check-plugins.php   checks each plugin's plugin.json
+phpstan.neon.dist           static analysis of the plugins
 ```
 
-Chaque plugin a sa version, dans son `plugin.json`, et ses propres releases.
+Each plugin has its own version, in its `plugin.json`, and its own releases.
 
 ## ✍️ Commits
 
-Les messages suivent [Conventional Commits](https://www.conventionalcommits.org/fr/v1.0.0/) :
-la version de chaque plugin en dépend. Type en anglais, description en français.
+Messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+each plugin's version depends on them. Write them in English.
 
-| Type | Effet sur la version | Exemple |
+| Type | Version bump | Example |
 |---|---|---|
-| `fix:` | patch (0.8.0 → 0.8.1) | `fix: refuse le HTML dans le titre d'un événement` |
-| `feat:` | mineure (0.8.0 → 0.9.0) | `feat: route de suppression d'un événement` |
-| `feat!:` ou pied `BREAKING CHANGE:` | majeure (0.x : mineure) | `feat!: renomme l'id du plugin` |
-| `docs:`, `chore:`, `ci:`, `refactor:`, `test:` | aucune | `docs: précise les erreurs 503` |
+| `fix:` | patch (0.8.0 → 0.8.1) | `fix: reject HTML in an event title` |
+| `feat:` | minor (0.8.0 → 0.9.0) | `feat: add a route to delete an event` |
+| `feat!:` or a `BREAKING CHANGE:` footer | major (0.x: minor) | `feat!: rename the plugin id` |
+| `docs:`, `chore:`, `ci:`, `refactor:`, `test:` | none | `docs: clarify 503 errors` |
 
-Une portée optionnelle nomme le plugin : `fix(custom-routes): …`. La version suit de toute
-façon les fichiers touchés, pas la portée.
+An optional scope names the plugin: `fix(custom-routes): …`. The version follows the files
+touched either way, not the scope.
 
-Seul « Squash and merge » est permis : le titre de la PR devient le message du commit sur
-`main`. Le workflow « Titre de PR » refuse un titre hors format.
+Only "Squash and merge" is allowed: the PR title becomes the commit message on `main`.
+The "PR title" workflow rejects a title that does not follow the format.
 
 ## 🚀 Releases
 
-[release-please](https://github.com/googleapis/release-please) les gère, plugin par plugin
-(`release-please-config.json`, `.release-please-manifest.json`) :
+[release-please](https://github.com/googleapis/release-please) handles them, plugin by
+plugin (`release-please-config.json`, `.release-please-manifest.json`):
 
-1. À chaque push sur `main`, il ouvre ou met à jour une PR de release par plugin modifié par
-   un `fix:` ou un `feat:` : version montée dans `plugin.json` et le README, `CHANGELOG.md`.
-2. Fusionner cette PR crée le tag `<id>-v<version>` et la release.
-3. Le workflow construit alors le zip, l'attache à la release et écrit son SHA-256 dans les notes.
+1. On each push to `main`, it opens or updates one release PR per plugin changed by a
+   `fix:` or a `feat:`: version bumped in `plugin.json` and the README, `CHANGELOG.md`.
+2. Merging that PR creates the `<id>-v<version>` tag and the release.
+3. The workflow then builds the zip, attaches it to the release and writes its SHA-256 in
+   the notes.
 
-Un plugin sans changement n'a pas de release. Ajouter un plugin : une entrée dans
-`packages` de `release-please-config.json`, et sa version actuelle dans le manifest
-(`scripts/check-plugins.php` refuse un plugin oublié).
+A plugin with no changes gets no release. To add a plugin: add an entry under `packages`
+in `release-please-config.json`, and its current version in the manifest
+(`scripts/check-plugins.php` rejects a forgotten plugin).
 
-## 📦 Construire un zip
+## 📦 Building a zip
 
 ```bash
 scripts/build.sh <id>
 ```
 
-Le script produit `dist/<id>-<version>.zip`, avec un seul dossier racine `<id>` et sans
-fichier caché, README, CHANGELOG ni docs, puis affiche son SHA-256.
+The script produces `dist/<id>-<version>.zip`, with a single `<id>` root folder and no
+hidden files, README, CHANGELOG or docs, then prints its SHA-256.
 
 ## Tests
 
-La CI vérifie, pour chaque plugin :
+For each plugin, CI checks:
 
-- la syntaxe PHP 8.4 (`php -l`) ;
-- le `plugin.json` (`scripts/check-plugins.php`) : champs exigés par ChurchCRM, id égal au
-  nom du dossier, `mainClass` et `routesFile` présents, entrées release-please ;
-- le code avec PHPStan (niveau 6), contre le code de ChurchCRM 7.8.0 : classe inconnue,
-  import manquant, mauvais appel ;
-- la construction du zip.
+- PHP 8.4 syntax (`php -l`);
+- the `plugin.json` (`scripts/check-plugins.php`): fields required by ChurchCRM, id equal
+  to the folder name, `mainClass` and `routesFile` present, release-please entries;
+- the code with PHPStan (level 6), against the ChurchCRM 7.8.0 code: unknown class,
+  missing import, wrong call;
+- the zip build.
 
-En local, avec le zip de ChurchCRM décompressé dans `<dossier>` :
+Locally, with the ChurchCRM release zip extracted into `<folder>`:
 
 ```bash
 php scripts/check-plugins.php
-CHURCHCRM_DIR=<dossier>/churchcrm phpstan analyse
+CHURCHCRM_DIR=<folder>/churchcrm phpstan analyse
 ```
 
-Les tests de comportement se font par appels HTTP sur une instance de test : voir la
-spécification de chaque plugin.
+Behavior tests are HTTP calls against a test instance: see each plugin's specification.
