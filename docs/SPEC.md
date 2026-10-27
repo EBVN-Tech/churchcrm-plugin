@@ -1,6 +1,6 @@
-# Spécification des routes — People Sync 0.7.1
+# Spécification des routes — Custom Routes 0.8.0
 
-Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/people-sync`.
+Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/custom-routes`.
 
 ## Principe
 
@@ -340,6 +340,12 @@ bloque alors sa clé API.
 L'installeur de ChurchCRM n'écrase jamais un plugin installé : désinstaller
 l'ancienne version (Admin → Plugins), puis installer la nouvelle par URL
 avec son SHA-256. La désinstallation efface les réglages du plugin.
+
+Depuis 0.8.0, le plugin s'appelle Custom Routes : id `custom-routes`, routes
+sous `/plugins/custom-routes`. L'ancien id `people-sync` est un autre
+plugin pour ChurchCRM : installer `custom-routes`, ressaisir ses réglages,
+changer l'URL de base de l'application appelante, puis désinstaller
+`people-sync`.
 
 ## Tests
 

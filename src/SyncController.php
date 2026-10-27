@@ -1,6 +1,6 @@
 <?php
 
-namespace ChurchCRM\Plugins\PeopleSync;
+namespace ChurchCRM\Plugins\CustomRoutes;
 
 use ChurchCRM\Authentication\AuthenticationManager;
 use ChurchCRM\Exceptions\EventDeleteRefusedException;
@@ -31,7 +31,7 @@ class SyncController
     /** Identifiant externe : UUID ou identifiant simple, 50 caractères max (champ texte 50). */
     private const EXTERNAL_ID_PATTERN = '/^[A-Za-z0-9_-]{1,50}$/';
 
-    public function __construct(private PeopleSyncPlugin $plugin)
+    public function __construct(private CustomRoutesPlugin $plugin)
     {
     }
 

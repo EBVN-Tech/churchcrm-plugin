@@ -1,6 +1,6 @@
 <?php
 
-namespace ChurchCRM\Plugins\PeopleSync;
+namespace ChurchCRM\Plugins\CustomRoutes;
 
 /**
  * Erreur renvoyée au client avec un code HTTP.

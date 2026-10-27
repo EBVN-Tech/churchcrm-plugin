@@ -1,6 +1,6 @@
 <?php
 
-namespace ChurchCRM\Plugins\PeopleSync;
+namespace ChurchCRM\Plugins\CustomRoutes;
 
 use ChurchCRM\model\ChurchCRM\FamilyCustomMasterQuery;
 use ChurchCRM\model\ChurchCRM\ListOptionQuery;

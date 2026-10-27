@@ -1,6 +1,6 @@
 <?php
 
-namespace ChurchCRM\Plugins\PeopleSync;
+namespace ChurchCRM\Plugins\CustomRoutes;
 
 use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\model\ChurchCRM\FamilyQuery;

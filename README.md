@@ -1,16 +1,17 @@
 <div align="center">
 
-# 🔄 People Sync
+# 🧩 Custom Routes
 
-**Plugin ChurchCRM : les routes d'écriture que l'API ne fournit pas.**
+**Plugin ChurchCRM : les routes sur mesure que l'API ne fournit pas.**
 
 Personnes, familles, champs personnalisés, événements et présences, sous
-`/plugins/people-sync/`, pour une application externe (intranet, outil de synchronisation).
+`/plugins/custom-routes/`, pour une application externe (intranet, outil de synchronisation).
+On y ajoute une route quand un besoin apparaît.
 
-![Version](https://img.shields.io/badge/version-0.7.1-blue)
+![Version](https://img.shields.io/badge/version-0.8.0-blue)
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
-[![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin-people-sync)](https://github.com/EBVN-Tech/churchcrm-plugin-people-sync/releases/latest)
+[![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin-custom-routes)](https://github.com/EBVN-Tech/churchcrm-plugin-custom-routes/releases/latest)
 
 [Démarrage rapide](#-démarrage-rapide) · [Routes](#-routes) · [Réglages](#%EF%B8%8F-réglages) · [Mise à jour](#-mise-à-jour) · [Construire le zip](#-construire-le-zip) · [Spécification](docs/SPEC.md)
 
@@ -21,7 +22,7 @@ Personnes, familles, champs personnalisés, événements et présences, sous
 ## Pourquoi
 
 L'API de ChurchCRM 7.8.0 lit les fiches, mais ne sait ni les lister toutes, ni les créer,
-ni les modifier depuis une application externe. People Sync ajoute seulement ce qui manque :
+ni les modifier depuis une application externe. Custom Routes ajoute ce qui manque, au fil des besoins :
 
 | | |
 |---|---|
@@ -38,21 +39,21 @@ ni les modifier depuis une application externe. People Sync ajoute seulement ce 
 
 **2. Installer.** Admin → Plugins → installation par URL, avec :
 
-- l'URL du zip de la [dernière release](https://github.com/EBVN-Tech/churchcrm-plugin-people-sync/releases/latest) ;
+- l'URL du zip de la [dernière release](https://github.com/EBVN-Tech/churchcrm-plugin-custom-routes/releases/latest) ;
 - son SHA-256, indiqué dans la release ;
-- l'id `people-sync`.
+- l'id `custom-routes`.
 
 ChurchCRM marque le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
 
 **3. Vérifier**, avec la clé API du compte de service :
 
 ```bash
-curl -H "x-api-key: <clé>" https://<churchcrm>/plugins/people-sync/ping
+curl -H "x-api-key: <clé>" https://<churchcrm>/plugins/custom-routes/ping
 ```
 
 ## 🧭 Routes
 
-Base : `/plugins/people-sync`. Détail des champs, réponses et erreurs : [`docs/SPEC.md`](docs/SPEC.md).
+Base : `/plugins/custom-routes`. Détail des champs, réponses et erreurs : [`docs/SPEC.md`](docs/SPEC.md).
 
 | Méthode | Route | Rôle | Droit exigé |
 |---|---|---|---|
@@ -90,16 +91,23 @@ version, puis installer la nouvelle par URL avec son SHA-256.
 
 > ⚠️ La désinstallation efface les réglages du plugin : les ressaisir après chaque mise à jour.
 
+**Depuis `people-sync` (0.7.1 et avant).** Le plugin s'appelait People Sync. Le nouvel id
+fait de `custom-routes` un autre plugin pour ChurchCRM, et change l'URL de base des routes :
+
+1. installer `custom-routes` et ressaisir ses réglages ;
+2. remplacer `/plugins/people-sync` par `/plugins/custom-routes` dans l'application appelante ;
+3. désinstaller `people-sync`.
+
 ## 📦 Construire le zip
 
 Le zip doit contenir un seul dossier racine nommé comme l'id du plugin, et
 aucun fichier caché :
 
 ```bash
-mkdir -p dist/people-sync
-cp -R plugin.json routes src dist/people-sync/
-(cd dist && zip -X -r -q people-sync-<version>.zip people-sync)
-shasum -a 256 dist/people-sync-<version>.zip
+mkdir -p dist/custom-routes
+cp -R plugin.json routes src dist/custom-routes/
+(cd dist && zip -X -r -q custom-routes-<version>.zip custom-routes)
+shasum -a 256 dist/custom-routes-<version>.zip
 ```
 
 Tests : `php -l` en PHP 8.4, puis des appels HTTP sur une instance de test (voir
