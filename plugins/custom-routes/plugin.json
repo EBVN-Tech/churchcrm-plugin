@@ -3,7 +3,7 @@
     "name": "Custom Routes",
     "description": "Custom routes that the ChurchCRM API does not provide, for an external application: lists, idempotent creation, partial update, custom fields, contact properties, list options, attendance and event management.",
     "version": "0.8.0",
-    "author": "Custom Routes",
+    "author": "Deke Li, for EBVN Tech",
     "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin",
     "type": "community",
     "minimumCRMVersion": "7.8.0",
