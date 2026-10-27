@@ -1,32 +1,96 @@
-# People Sync — plugin ChurchCRM
+<div align="center">
 
-Plugin communautaire pour ChurchCRM 7.8.0 ou plus. Il expose sous
-`/plugins/people-sync/` les routes d'écriture des personnes et familles que
-l'API ChurchCRM ne fournit pas, pour une application externe (intranet,
-outil de synchronisation). Les routes sont authentifiées par l'en-tête `x-api-key`.
+# 🔄 People Sync
 
-Version 0.7.1 (événements : `POST`, `PATCH`, `DELETE /events…` ; 0.6 : présences ; 0.5 : propriétés de contact et listes). Spécification complète : [`docs/SPEC.md`](docs/SPEC.md).
+**Plugin ChurchCRM : les routes d'écriture que l'API ne fournit pas.**
 
-| Méthode | Route | Rôle |
+Personnes, familles, champs personnalisés, événements et présences, sous
+`/plugins/people-sync/`, pour une application externe (intranet, outil de synchronisation).
+
+![Version](https://img.shields.io/badge/version-0.7.1-blue)
+![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
+![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
+[![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin-people-sync)](https://github.com/EBVN-Tech/churchcrm-plugin-people-sync/releases/latest)
+
+[Démarrage rapide](#-démarrage-rapide) · [Routes](#-routes) · [Réglages](#%EF%B8%8F-réglages) · [Mise à jour](#-mise-à-jour) · [Construire le zip](#-construire-le-zip) · [Spécification](docs/SPEC.md)
+
+</div>
+
+---
+
+## Pourquoi
+
+L'API de ChurchCRM 7.8.0 lit les fiches, mais ne sait ni les lister toutes, ni les créer,
+ni les modifier depuis une application externe. People Sync ajoute seulement ce qui manque :
+
+| | |
+|---|---|
+| 🔁 **Création idempotente** | `POST` exige un `externalId` : relancer après une coupure ne crée pas de doublon. |
+| ✏️ **Modification partielle** | `PATCH` n'écrit que les champs envoyés. Un champ inconnu donne `422`, jamais un oubli silencieux. |
+| 🔐 **Droits de ChurchCRM** | Clé `x-api-key`, droits du compte de la clé, sécurité de chaque champ personnalisé. |
+| 🙈 **Groupe exclu** | Les comptes techniques d'un groupe réglé ne sont jamais renvoyés ni modifiables. |
+| 🧾 **Historique conservé** | Les écritures passent par les modèles Propel : notes d'historique et hooks de ChurchCRM inclus, jamais de SQL direct. |
+
+## 🚀 Démarrage rapide
+
+**1. Créer les champs d'identifiant externe.** Dans ChurchCRM, un champ personnalisé nommé
+`ext-id` (« Text Field (50 char) », sécurité Admin) pour les personnes, et un pour les familles.
+
+**2. Installer.** Admin → Plugins → installation par URL, avec :
+
+- l'URL du zip de la [dernière release](https://github.com/EBVN-Tech/churchcrm-plugin-people-sync/releases/latest) ;
+- son SHA-256, indiqué dans la release ;
+- l'id `people-sync`.
+
+ChurchCRM marque le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
+
+**3. Vérifier**, avec la clé API du compte de service :
+
+```bash
+curl -H "x-api-key: <clé>" https://<churchcrm>/plugins/people-sync/ping
+```
+
+## 🧭 Routes
+
+Base : `/plugins/people-sync`. Détail des champs, réponses et erreurs : [`docs/SPEC.md`](docs/SPEC.md).
+
+| Méthode | Route | Rôle | Droit exigé |
+|---|---|---|---|
+| `GET` | `/ping` | vérifie l'installation et les réglages | clé valide |
+| `GET` | `/{persons,families}` | listes complètes, hors groupe exclu | clé valide |
+| `POST` | `/{person,family}` | crée une fiche (idempotent par `externalId`) | AddRecords |
+| `PATCH` | `/{person,family}/{id}` | modifie les champs envoyés | EditRecords |
+| `GET` | `/{person,family}/{id}/custom` | lit les champs personnalisés autorisés | sécurité de chaque champ |
+| `PATCH` | `/{person,family}/{id}/custom` | écrit des champs personnalisés | EditRecords + sécurité de chaque champ |
+| `PATCH` | `/person/{id}/properties` | pose ou retire « Ne pas contacter » (e-mail, SMS) | EditRecords |
+| `GET` | `/lists/{id}` | options d'une liste ChurchCRM (classification, rôle familial…) | clé valide |
+| `POST` | `/events` | crée un événement | Add Event |
+| `PATCH` | `/events/{id}` | modifie un événement | Add Event |
+| `DELETE` | `/events/{id}` | supprime un événement sans présence | Add Event |
+| `GET` | `/events/{id}/attendance` | présences d'un événement, hors groupe exclu | clé valide |
+
+Lire, activer ou supprimer une fiche, les notes et la photo restent dans l'API ChurchCRM
+existante (voir « Hors plugin » dans la [spécification](docs/SPEC.md#hors-plugin--api-churchcrm-existante)).
+
+## ⚙️ Réglages
+
+| Clé | Par défaut | Rôle |
 |---|---|---|
-| `GET` | `/plugins/people-sync/ping` | vérifie l'installation et les réglages |
-| `GET` | `/plugins/people-sync/{persons,families}` | listes complètes, hors groupe exclu |
-| `POST` | `/plugins/people-sync/{person,family}` | crée une fiche (idempotent par `externalId`) |
-| `PATCH` | `/plugins/people-sync/{person,family}/{id}` | modifie les champs envoyés |
-| `GET` | `/plugins/people-sync/{person,family}/{id}/custom` | lit les champs personnalisés autorisés |
-| `PATCH` | `/plugins/people-sync/{person,family}/{id}/custom` | écrit des champs personnalisés |
+| `personExternalIdField` | `ext-id` | champ personnalisé de personne qui reçoit l'identifiant externe |
+| `familyExternalIdField` | `ext-id` | champ personnalisé de famille qui reçoit l'identifiant externe |
+| `excludedGroupName` | vide | groupe dont les membres ne sont jamais renvoyés ni modifiables |
 
-Prérequis : un champ personnalisé nommé `ext-id` (texte 50, sécurité Admin)
-pour les personnes et un pour les familles.
+Un champ ou un groupe introuvable, ou en double, fait répondre `503` aux routes qui en
+dépendent : pas d'écriture sans identifiant externe, pas de fiche qui aurait dû être masquée.
 
-## Installation
+## 🔼 Mise à jour
 
-Admin → Plugins → installation par URL, avec l'URL du zip de la release,
-son SHA-256 (indiqué dans la release) et l'id `people-sync`. Pour changer
-de version : désinstaller l'ancienne, puis installer la nouvelle. ChurchCRM marque
-le plugin « unverified » : c'est normal pour un plugin absent du registre officiel.
+L'installeur de ChurchCRM n'écrase jamais un plugin installé : désinstaller l'ancienne
+version, puis installer la nouvelle par URL avec son SHA-256.
 
-## Construire le zip
+> ⚠️ La désinstallation efface les réglages du plugin : les ressaisir après chaque mise à jour.
+
+## 📦 Construire le zip
 
 Le zip doit contenir un seul dossier racine nommé comme l'id du plugin, et
 aucun fichier caché :
@@ -37,3 +101,6 @@ cp -R plugin.json routes src dist/people-sync/
 (cd dist && zip -X -r -q people-sync-<version>.zip people-sync)
 shasum -a 256 dist/people-sync-<version>.zip
 ```
+
+Tests : `php -l` en PHP 8.4, puis des appels HTTP sur une instance de test (voir
+« Tests » dans la [spécification](docs/SPEC.md#tests)).
