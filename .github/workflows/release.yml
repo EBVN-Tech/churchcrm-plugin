@@ -18,7 +18,7 @@ jobs:
       - if: steps.release.outputs.releases_created == 'true'
         uses: actions/checkout@v7
 
-      - name: Zip et SHA-256 des plugins publiés
+      - name: Zip and SHA-256 of released plugins
         if: steps.release.outputs.releases_created == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,5 +31,5 @@ jobs:
             sum="$(scripts/build.sh "$id" | cut -d ' ' -f 1)"
             gh release upload "$tag" "dist/$id-$version.zip"
             notes="$(gh release view "$tag" --json body --jq .body)"
-            gh release edit "$tag" --notes "$(printf 'Zip : `%s-%s.zip`\nSHA-256 : `%s`\nId : `%s`\n\n%s' "$id" "$version" "$sum" "$id" "$notes")"
+            gh release edit "$tag" --notes "$(printf 'Zip: `%s-%s.zip`\nSHA-256: `%s`\nId: `%s`\n\n%s' "$id" "$version" "$sum" "$id" "$notes")"
           done

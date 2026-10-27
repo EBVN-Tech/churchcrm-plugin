@@ -24,15 +24,15 @@ jobs:
         with:
           php-version: '8.4'
 
-      - name: Syntaxe PHP 8.4
+      - name: PHP 8.4 syntax
         run: find plugins -name '*.php' -print0 | xargs -0 -n 1 php -l
 
-      - name: plugin.json de chaque plugin
+      - name: Each plugin's plugin.json
         run: php scripts/check-plugins.php
 
-      # PHPStan analyse les plugins avec le code de ChurchCRM (classes, modèles
-      # Propel, Slim) : un import manquant ou un mauvais appel est refusé.
-      - name: ChurchCRM et PHPStan
+      # PHPStan analyses the plugins with ChurchCRM's code (classes, Propel
+      # models, Slim): a missing import or a wrong call is rejected.
+      - name: ChurchCRM and PHPStan
         run: |
           cd "$RUNNER_TEMP"
           curl -fsSL -o churchcrm.zip "https://github.com/ChurchCRM/CRM/releases/download/$CHURCHCRM_VERSION/ChurchCRM-$CHURCHCRM_VERSION.zip"
@@ -45,7 +45,7 @@ jobs:
       - name: PHPStan
         run: php -d memory_limit=1G "$RUNNER_TEMP/phpstan.phar" analyse --no-progress --error-format=github
 
-      - name: Zip de chaque plugin
+      - name: Zip build check (not published)
         run: |
           for dir in plugins/*/; do
             scripts/build.sh "$(basename "$dir")"

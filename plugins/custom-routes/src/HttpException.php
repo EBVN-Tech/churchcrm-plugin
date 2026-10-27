@@ -3,10 +3,10 @@
 namespace ChurchCRM\Plugins\CustomRoutes;
 
 /**
- * Erreur renvoyée au client avec un code HTTP.
+ * Error returned to the client with an HTTP code.
  *
- * Le message et les erreurs par champ ne contiennent jamais une valeur
- * reçue : seulement des noms de champs et des règles.
+ * The message and the per-field errors never contain a received value:
+ * only field names and rules.
  */
 class HttpException extends \RuntimeException
 {

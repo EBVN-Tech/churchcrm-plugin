@@ -1,5 +1,5 @@
-# Analyse les plugins avec le code de ChurchCRM : CHURCHCRM_DIR pointe vers le
-# dossier churchcrm du zip de release (voir « Tests » dans le README).
+# Analyses the plugins with ChurchCRM's code: CHURCHCRM_DIR points to the
+# churchcrm folder of the release zip (see "Tests" in the README).
 parameters:
     level: 6
     paths:

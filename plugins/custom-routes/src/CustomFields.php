@@ -9,19 +9,19 @@ use ChurchCRM\model\ChurchCRM\User;
 use Propel\Runtime\Connection\ConnectionInterface;
 
 /**
- * Champs personnalisés des personnes et familles.
+ * Custom fields of persons and families.
  *
- * Les valeurs vivent dans person_custom / family_custom, une colonne par
- * champ (c1, c2…) ajoutée dynamiquement par ChurchCRM : elles ne font pas
- * partie du schéma Propel, d'où les requêtes SQL préparées, comme dans
- * l'import CSV de ChurchCRM.
+ * Values live in person_custom / family_custom, one column per field
+ * (c1, c2…) added dynamically by ChurchCRM: they are not part of the
+ * Propel schema, hence the prepared SQL queries, as in ChurchCRM's
+ * CSV import.
  */
 class CustomFields
 {
-    /** Types refusés : saison (7) et personne d'un groupe (9). */
+    /** Rejected types: season (7) and person from a group (9). */
     private const UNSUPPORTED_TYPES = [7, 9];
 
-    /** Liste ChurchCRM des niveaux de sécurité des champs personnalisés. */
+    /** ChurchCRM list of custom field security levels. */
     private const LIST_SECURITY = 5;
 
     private const TABLES = [
@@ -30,7 +30,7 @@ class CustomFields
     ];
 
     /**
-     * Définitions des champs : code => [name, typeId, security, special].
+     * Field definitions: code => [name, typeId, security, special].
      *
      * @return array<string, array{name: string, typeId: int, security: int, special: int}>
      */
@@ -57,16 +57,16 @@ class CustomFields
             }
         }
 
-        // Les codes servent de noms de colonnes SQL : ne garder que c<chiffres>.
+        // Codes are used as SQL column names: keep only c<digits>.
         return array_filter($defs, fn ($code) => preg_match('/^c\d+$/', $code) === 1, ARRAY_FILTER_USE_KEY);
     }
 
     /**
-     * Le compte peut-il lire et écrire ce champ ?
+     * Can the account read and write this field?
      *
-     * custom_FieldSec est un numéro d'option de la liste 5 (1 = bAll,
-     * 2 = bAdmin, 4 = bEditRecords…). Il faut le traduire en nom avant
-     * User::isEnabledSecurity(), comme le font les pages de ChurchCRM.
+     * custom_FieldSec is an option number from list 5 (1 = bAll,
+     * 2 = bAdmin, 4 = bEditRecords…). It must be translated into a name
+     * before User::isEnabledSecurity(), as ChurchCRM's pages do.
      */
     public static function isAllowed(User $user, int $security): bool
     {
@@ -79,8 +79,8 @@ class CustomFields
     }
 
     /**
-     * Code du champ portant le nom donné, ou null s'il n'existe pas ou
-     * n'est pas unique.
+     * Code of the field with the given name, or null if it does not exist
+     * or is not unique.
      */
     public static function codeByName(string $kind, string $name): ?string
     {
@@ -95,7 +95,7 @@ class CustomFields
     }
 
     /**
-     * Identifiant de la fiche existante portant cet identifiant externe.
+     * ID of the existing record that holds this external ID.
      */
     public static function findByExternalId(ConnectionInterface $con, string $kind, string $code, string $externalId): ?int
     {
@@ -109,8 +109,8 @@ class CustomFields
         );
         $stmt = $con->prepare($sql);
         $stmt->execute([$externalId]);
-        // fetch() plutôt que fetchColumn() : selon le pilote, une recherche
-        // vide renvoie false ou null, et (int) null vaudrait 0.
+        // fetch() rather than fetchColumn(): depending on the driver, an
+        // empty lookup returns false or null, and (int) null would be 0.
         $row = $stmt->fetch(\PDO::FETCH_NUM);
         $id = is_array($row) ? (int) $row[0] : 0;
 
@@ -118,19 +118,19 @@ class CustomFields
     }
 
     /**
-     * Valide un corps {code: valeur} et renvoie {code: valeur SQL}.
+     * Validates a {code: value} body and returns {code: SQL value}.
      *
      * @param array<string, mixed> $body
      *
      * @return array<string, string|null>
      *
-     * @throws HttpException 403 si un champ est protégé pour ce compte,
-     *                       422 si un champ est inconnu ou invalide
+     * @throws HttpException 403 if a field is protected for this account,
+     *                       422 if a field is unknown or invalid
      */
     public static function validate(string $kind, array $body, string $externalIdCode, User $user): array
     {
         if (empty($body)) {
-            throw new HttpException(422, 'Aucun champ envoyé');
+            throw new HttpException(422, 'No field sent');
         }
 
         $defs = self::definitions($kind);
@@ -141,11 +141,11 @@ class CustomFields
         foreach ($body as $code => $value) {
             $code = (string) $code;
             if (!isset($defs[$code])) {
-                $errors[$code] = 'champ inconnu';
+                $errors[$code] = 'unknown field';
                 continue;
             }
             if ($code === $externalIdCode) {
-                $errors[$code] = 'identifiant externe non modifiable';
+                $errors[$code] = 'external ID cannot be changed';
                 continue;
             }
             $def = $defs[$code];
@@ -154,7 +154,7 @@ class CustomFields
                 continue;
             }
             if (in_array($def['typeId'], self::UNSUPPORTED_TYPES, true)) {
-                $errors[$code] = 'type de champ non géré';
+                $errors[$code] = 'unsupported field type';
                 continue;
             }
             $error = null;
@@ -165,18 +165,18 @@ class CustomFields
         }
 
         if (!empty($forbidden)) {
-            throw new HttpException(403, 'Droit manquant sur ces champs', array_fill_keys($forbidden, 'accès refusé'));
+            throw new HttpException(403, 'Missing permission on these fields', array_fill_keys($forbidden, 'access denied'));
         }
         if (!empty($errors)) {
-            throw new HttpException(422, 'Données invalides', $errors);
+            throw new HttpException(422, 'Invalid data', $errors);
         }
 
         return $values;
     }
 
     /**
-     * Lit les champs que le compte a le droit de voir, sauf l'identifiant
-     * externe : code => {name, value}.
+     * Reads the fields the account is allowed to see, except the external
+     * ID: code => {name, value}.
      *
      * @return array<string, array{name: string, value: string|null}>
      */
@@ -212,9 +212,9 @@ class CustomFields
     }
 
     /**
-     * Écrit les valeurs (INSERT … ON DUPLICATE KEY UPDATE).
+     * Writes the values (INSERT … ON DUPLICATE KEY UPDATE).
      *
-     * @param array<string, string|null> $values codes déjà validés
+     * @param array<string, string|null> $values already validated codes
      */
     public static function write(ConnectionInterface $con, string $kind, int $recordId, array $values): void
     {
@@ -246,9 +246,9 @@ class CustomFields
         }
 
         switch ($def['typeId']) {
-            case 1: // Vrai / faux : ENUM('false','true')
+            case 1: // True / false: ENUM('false','true')
                 if (!is_bool($value)) {
-                    $error = 'true ou false attendu';
+                    $error = 'true or false expected';
 
                     return null;
                 }
@@ -257,67 +257,67 @@ class CustomFields
 
             case 2: // Date
                 if (!is_string($value) || !RecordSchema::isIsoDate($value)) {
-                    $error = 'date AAAA-MM-JJ attendue';
+                    $error = 'YYYY-MM-DD date expected';
 
                     return null;
                 }
 
                 return $value;
 
-            case 3: // Texte 50
-            case 4: // Texte 100
-            case 5: // Texte long
-            case 11: // Téléphone
+            case 3: // Text 50
+            case 4: // Text 100
+            case 5: // Long text
+            case 11: // Phone
                 $max = [3 => 50, 4 => 100, 5 => 65535, 11 => 30][$def['typeId']];
                 if (!is_string($value)) {
-                    $error = 'texte attendu';
+                    $error = 'text expected';
 
                     return null;
                 }
                 $value = trim($value);
                 if ($value !== strip_tags($value)) {
-                    $error = 'balises HTML interdites';
+                    $error = 'HTML tags not allowed';
 
                     return null;
                 }
                 if (mb_strlen($value) > $max) {
-                    $error = "{$max} caractères maximum";
+                    $error = "{$max} characters maximum";
 
                     return null;
                 }
 
                 return $value === '' ? null : $value;
 
-            case 6: // Année
+            case 6: // Year
                 if (!is_int($value) || $value < 1000 || $value > 9999) {
-                    $error = 'année sur 4 chiffres attendue';
+                    $error = '4-digit year expected';
 
                     return null;
                 }
 
                 return (string) $value;
 
-            case 8: // Nombre entier
+            case 8: // Integer
                 if (!is_int($value)) {
-                    $error = 'entier attendu';
+                    $error = 'integer expected';
 
                     return null;
                 }
 
                 return (string) $value;
 
-            case 10: // Montant
+            case 10: // Money
                 if (!is_int($value) && !is_float($value)) {
-                    $error = 'nombre attendu';
+                    $error = 'number expected';
 
                     return null;
                 }
 
                 return number_format((float) $value, 2, '.', '');
 
-            case 12: // Liste déroulante : option de la liste custom_Special
+            case 12: // Drop-down list: option from the custom_Special list
                 if (!is_int($value) || !RecordSchema::listOptionExists($def['special'], $value)) {
-                    $error = 'option introuvable';
+                    $error = 'option not found';
 
                     return null;
                 }
@@ -325,7 +325,7 @@ class CustomFields
                 return (string) $value;
         }
 
-        $error = 'type de champ non géré';
+        $error = 'unsupported field type';
 
         return null;
     }

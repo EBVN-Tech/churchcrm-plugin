@@ -1,113 +1,113 @@
-# Spécification des routes — Custom Routes 0.8.0
+# Route specification — Custom Routes 0.8.0
 
-Cible : ChurchCRM 7.8.0. Base des routes : `/plugins/custom-routes`.
+Target: ChurchCRM 7.8.0. Route base: `/plugins/custom-routes`.
 
-## Principe
+## Principle
 
-Le plugin ajoute seulement ce que l'API ChurchCRM ne sait pas faire :
-lister toutes les personnes et familles, les créer et les modifier, lire
-et écrire leurs champs personnalisés. Tout le reste passe par l'API existante (voir « Hors plugin »).
+The plugin only adds what the ChurchCRM API cannot do:
+list all persons and families, create and update them, read
+and write their custom fields. Everything else goes through the existing API (see "Outside the plugin").
 
-Les écritures passent par les modèles Propel (`Person`, `Family`). Leur
-`save()` crée déjà les notes d'historique (`create`, `edit`) et déclenche
-les hooks `person.created`, `person.updated`, `family.created`,
-`family.updated`. Le plugin n'écrit jamais en SQL dans `person_per` ou
+Writes go through the Propel models (`Person`, `Family`). Their
+`save()` already creates the history notes (`create`, `edit`) and fires
+the `person.created`, `person.updated`, `family.created`,
+`family.updated` hooks. The plugin never writes SQL into `person_per` or
 `family_fam`.
 
-L'application appelante décide elle-même entre création et modification :
-elle garde l'identifiant ChurchCRM renvoyé à la création. Pas d'identifiant
-connu : `POST`. Identifiant connu : `PATCH`. Le plugin ne cherche jamais à
-deviner une correspondance (par e-mail ou par nom).
+The calling application decides itself between creation and update:
+it keeps the ChurchCRM ID returned on creation. No known
+ID: `POST`. Known ID: `PATCH`. The plugin never tries to
+guess a match (by email or by name).
 
-## Authentification et droits
+## Authentication and permissions
 
-- En-tête `x-api-key`, vérifié par l'`AuthMiddleware` de ChurchCRM.
-- Les droits sont ceux du compte ChurchCRM de la clé :
+- `x-api-key` header, checked by ChurchCRM's `AuthMiddleware`.
+- Permissions are those of the key's ChurchCRM account:
 
-| Route | Droit exigé |
+| Route | Required permission |
 |---|---|
-| `GET /persons`, `GET /families` | aucun au-delà d'une clé valide (ChurchCRM donne la lecture des fiches à tout compte) |
+| `GET /persons`, `GET /families` | none beyond a valid key (ChurchCRM gives read access to records to every account) |
 | `POST /person`, `POST /family` | AddRecords |
 | `PATCH /person/{id}`, `PATCH /family/{id}` | EditRecords |
-| `GET /person/{id}/custom`, `GET /family/{id}/custom` | sécurité de chaque champ |
-| `PATCH /person/{id}/custom`, `PATCH /family/{id}/custom` | EditRecords, plus la sécurité de chaque champ |
+| `GET /person/{id}/custom`, `GET /family/{id}/custom` | security of each field |
+| `PATCH /person/{id}/custom`, `PATCH /family/{id}/custom` | EditRecords, plus the security of each field |
 | `PATCH /person/{id}/properties` | EditRecords |
-| `GET /lists/{id}` | aucun au-delà d'une clé valide |
-| `GET /events/{id}/attendance` | aucun au-delà d'une clé valide |
+| `GET /lists/{id}` | none beyond a valid key |
+| `GET /events/{id}/attendance` | none beyond a valid key |
 | `POST /events`, `PATCH /events/{id}`, `DELETE /events/{id}` | AddEvent |
 
-La sécurité d'un champ personnalisé (`custom_FieldSec`) est un numéro
-d'option de la liste ChurchCRM 5 (`1` bAll, `2` bAdmin, `3` bAddRecords,
-`4` bEditRecords, `8` bFinance…). Le plugin le traduit en nom avant
-`User::isEnabledSecurity()`, comme les pages de ChurchCRM.
+The security of a custom field (`custom_FieldSec`) is an option
+number from ChurchCRM list 5 (`1` bAll, `2` bAdmin, `3` bAddRecords,
+`4` bEditRecords, `8` bFinance…). The plugin translates it into a name before
+`User::isEnabledSecurity()`, as ChurchCRM's pages do.
 
-`GET /api/person/{id}` de ChurchCRM 7.8.0 ne fait pas cette traduction
-(`Person::getVisibleCustomFieldDefinitions()` passe le numéro brut) : un
-compte non administrateur n'y voit aucun champ personnalisé. D'où la route
-`GET …/custom` du plugin.
+`GET /api/person/{id}` in ChurchCRM 7.8.0 does not do this translation
+(`Person::getVisibleCustomFieldDefinitions()` passes the raw number): a
+non-administrator account sees no custom field there. Hence the plugin's
+`GET …/custom` route.
 
-Un champ que le compte ne peut pas voir ne peut pas non plus être écrit :
-`403`, sans rien enregistrer.
+A field the account cannot see cannot be written either:
+`403`, with nothing saved.
 
-Les fiches sont enregistrées au nom du compte de service (`EnteredBy`,
-`EditedBy`). L'application appelante garde son propre historique de qui a
-fait quoi.
+Records are saved under the service account's name (`EnteredBy`,
+`EditedBy`). The calling application keeps its own history of who
+did what.
 
-## Réglages du plugin
+## Plugin settings
 
-| Clé | Par défaut | Rôle |
+| Key | Default | Purpose |
 |---|---|---|
-| `personExternalIdField` | `ext-id` | Nom du champ personnalisé de personne qui reçoit l'identifiant externe |
-| `familyExternalIdField` | `ext-id` | Nom du champ personnalisé de famille qui reçoit l'identifiant externe |
-| `excludedGroupName` | vide | Nom exact d'un groupe ChurchCRM dont les membres (comptes techniques…) ne sont jamais renvoyés ni modifiables |
+| `personExternalIdField` | `ext-id` | Name of the person custom field that holds the external ID |
+| `familyExternalIdField` | `ext-id` | Name of the family custom field that holds the external ID |
+| `excludedGroupName` | empty | Exact name of a ChurchCRM group whose members (technical accounts…) are never returned or editable |
 
-Les deux champs sont à créer dans ChurchCRM (type « Text Field (50 char) »),
-avec une sécurité Admin pour qu'ils restent masqués. Le plugin les retrouve
-par leur nom ; le nom doit être unique. Sinon `isConfigured()` renvoie
-`false` et les routes qui en dépendent répondent `503`. Renommer le champ
-dans ChurchCRM produit le même `503` : pas d'écriture sans identifiant
-externe.
+Both fields must be created in ChurchCRM (type "Text Field (50 char)"),
+with Admin security so that they stay hidden. The plugin finds them
+by name; the name must be unique. Otherwise `isConfigured()` returns
+`false` and the routes that depend on them answer `503`. Renaming the field
+in ChurchCRM gives the same `503`: no write without an external
+ID.
 
-Groupe exclu : ses membres n'apparaissent dans aucune liste, et toute route
-qui les vise par leur `id` répond `404`. Une famille dont tous les membres
-sont exclus n'est pas listée. Si le groupe réglé n'existe pas (ou si deux
-groupes portent ce nom), les routes répondent `503` plutôt que de renvoyer
-des fiches qui auraient dû être masquées. Les réglages sont effacés à la
-désinstallation du plugin : les ressaisir après chaque mise à jour.
+Excluded group: its members appear in no list, and any route
+that targets them by their `id` answers `404`. A family whose members
+are all excluded is not listed. If the configured group does not exist (or if two
+groups have that name), the routes answer `503` rather than returning
+records that should have been hidden. Settings are erased when the
+plugin is uninstalled: enter them again after each upgrade.
 
-## Idempotence de la création
+## Idempotent creation
 
-`POST /person` et `POST /family` exigent un `externalId` : 1 à 50
-caractères parmi `A-Z a-z 0-9 _ -` (un UUID convient).
+`POST /person` and `POST /family` require an `externalId`: 1 to 50
+characters from `A-Z a-z 0-9 _ -` (a UUID works).
 
-- Une fiche existante porte déjà cet `externalId` : `200` avec son `id`,
-  rien n'est modifié.
-- Sinon : création, écriture de l'`externalId` dans la même transaction,
-  `201` avec le nouvel `id`.
+- An existing record already has this `externalId`: `200` with its `id`,
+  nothing is changed.
+- Otherwise: creation, `externalId` written in the same transaction,
+  `201` with the new `id`.
 
-Relancer un `POST` après une coupure ne crée donc pas de doublon. Limite
-connue : deux `POST` simultanés avec le même `externalId` peuvent créer deux
-fiches. L'application appelante envoie ses créations une par une.
+Retrying a `POST` after a network failure therefore does not create a duplicate. Known
+limit: two simultaneous `POST`s with the same `externalId` can create two
+records. The calling application sends its creations one at a time.
 
 ## Routes
 
 ### `GET /ping`
 
-Depuis 0.7.1, la réponse ajoute `doNotEmailPropertyId` et `doNotSmsPropertyId` (entier ou `null` si non réglé).
+Since 0.7.1, the response adds `doNotEmailPropertyId` and `doNotSmsPropertyId` (integer, or `null` if not set).
 
-Vérifie l'installation : `version`, `userId`, `addRecords`, `editRecords`,
-`configured`, `configurationError`, `excludedGroup` (nom réglé) et
-`excludedPersons` (nombre de personnes masquées).
+Checks the installation: `version`, `userId`, `addRecords`, `editRecords`,
+`configured`, `configurationError`, `excludedGroup` (configured name) and
+`excludedPersons` (number of hidden persons).
 
 ### `GET /persons`
 
-Toutes les personnes hors groupe exclu, triées par nom puis prénom. Pas de
-pagination : quelques centaines de fiches tiennent dans une réponse. Pas de
-champ personnalisé : l'IBAN se lit fiche par fiche via `…/custom`.
+All persons excluding the excluded group, sorted by last name then first name. No
+pagination: a few hundred records fit in one response. No
+custom field: the IBAN is read record by record via `…/custom`.
 
 ```json
 { "success": true, "count": 1, "items": [ {
-  "id": 12, "firstName": "Léa", "lastName": "Moreau", "familyId": 3,
+  "id": 12, "firstName": "Leah", "lastName": "Moore", "familyId": 3,
   "familyRoleId": 3, "classificationId": 1, "active": true,
   "email": null, "cellPhone": null,
   "birthDay": 2, "birthMonth": 5, "birthYear": 2019,
@@ -115,23 +115,23 @@ champ personnalisé : l'IBAN se lit fiche par fiche via `…/custom`.
 } ] }
 ```
 
-`doNotEmail` / `doNotSms` : la personne porte la propriété réglée dans
-`iDoNotEmailPropertyId` / `iDoNotSmsPropertyId` de ChurchCRM (`false` si le
-réglage est vide).
+`doNotEmail` / `doNotSms`: the person has the property set in
+ChurchCRM's `iDoNotEmailPropertyId` / `iDoNotSmsPropertyId` (`false` if the
+setting is empty).
 
 ### `GET /families`
 
-Toutes les familles, triées par nom, avec `memberCount` (hors groupe exclu) :
+All families, sorted by name, with `memberCount` (excluding the excluded group):
 `id`, `name`, `address1`, `address2`, `zip`, `city`, `homePhone`, `email`,
 `active`, `memberCount`.
 
 ### `POST /person`
 
-Corps JSON. `externalId`, `firstName` et `lastName` obligatoires. Sans
-`country`, le pays par défaut des réglages ChurchCRM est appliqué, comme
-dans ses éditeurs.
+JSON body. `externalId`, `firstName` and `lastName` required. Without
+`country`, the default country from the ChurchCRM settings is applied, as
+in its editors.
 
-Réponse `201` (ou `200` si l'`externalId` existe déjà) :
+Response `201` (or `200` if the `externalId` already exists):
 
 ```json
 { "success": true, "id": 123, "created": true }
@@ -139,220 +139,220 @@ Réponse `201` (ou `200` si l'`externalId` existe déjà) :
 
 ### `PATCH /person/{id}`
 
-Corps JSON, tous les champs facultatifs, au moins un. Seuls les champs
-présents changent. `null` vide un champ (`0` pour les champs entiers), sauf
-pour les champs obligatoires. `externalId` ne se modifie pas. `404` si la
-personne n'existe pas.
+JSON body, all fields optional, at least one. Only the fields
+present change. `null` clears a field (`0` for integer fields), except
+for required fields. `externalId` cannot be changed. `404` if the
+person does not exist.
 
-Réponse `200` : `{ "success": true, "id": 123 }`.
+Response `200`: `{ "success": true, "id": 123 }`.
 
-### Champs de personne
+### Person fields
 
-| Champ JSON | Colonne | Règle |
+| JSON field | Column | Rule |
 |---|---|---|
-| `title` | `per_Title` | texte, 50 max |
-| `firstName` | `per_FirstName` | texte, 50 max, non vide |
-| `middleName` | `per_MiddleName` | texte, 50 max |
-| `lastName` | `per_LastName` | texte, 50 max, non vide |
-| `suffix` | `per_Suffix` | texte, 50 max |
-| `gender` | `per_Gender` | `0` inconnu, `1` homme, `2` femme |
-| `birthDay` | `per_BirthDay` | 0 à 31 |
-| `birthMonth` | `per_BirthMonth` | 0 à 12 |
-| `birthYear` | `per_BirthYear` | 1900 à l'année en cours, ou `null` |
-| `email` | `per_Email` | e-mail valide, 50 max |
-| `workEmail` | `per_WorkEmail` | e-mail valide, 50 max |
-| `cellPhone` | `per_CellPhone` | texte, 30 max |
-| `homePhone` | `per_HomePhone` | texte, 30 max |
-| `workPhone` | `per_WorkPhone` | texte, 30 max |
-| `address1`, `address2` | `per_Address1`, `per_Address2` | texte, 50 max |
-| `city`, `state`, `zip`, `country` | `per_City`… | texte, 50 max |
-| `familyId` | `per_fam_ID` | famille existante, ou `0` sans famille |
-| `familyRoleId` | `per_fmr_ID` | `0` ou option existante de la liste 2 (rôle familial) |
-| `classificationId` | `per_cls_ID` | `0` ou option existante de la liste 1 (classification) |
-| `membershipDate` | `per_MembershipDate` | `AAAA-MM-JJ` ou `null` |
-| `friendDate` | `per_FriendDate` | `AAAA-MM-JJ` ou `null` |
+| `title` | `per_Title` | text, 50 max |
+| `firstName` | `per_FirstName` | text, 50 max, non-empty |
+| `middleName` | `per_MiddleName` | text, 50 max |
+| `lastName` | `per_LastName` | text, 50 max, non-empty |
+| `suffix` | `per_Suffix` | text, 50 max |
+| `gender` | `per_Gender` | `0` unknown, `1` male, `2` female |
+| `birthDay` | `per_BirthDay` | 0 to 31 |
+| `birthMonth` | `per_BirthMonth` | 0 to 12 |
+| `birthYear` | `per_BirthYear` | 1900 to the current year, or `null` |
+| `email` | `per_Email` | valid email, 50 max |
+| `workEmail` | `per_WorkEmail` | valid email, 50 max |
+| `cellPhone` | `per_CellPhone` | text, 30 max |
+| `homePhone` | `per_HomePhone` | text, 30 max |
+| `workPhone` | `per_WorkPhone` | text, 30 max |
+| `address1`, `address2` | `per_Address1`, `per_Address2` | text, 50 max |
+| `city`, `state`, `zip`, `country` | `per_City`… | text, 50 max |
+| `familyId` | `per_fam_ID` | existing family, or `0` for no family |
+| `familyRoleId` | `per_fmr_ID` | `0` or existing option of list 2 (family role) |
+| `classificationId` | `per_cls_ID` | `0` or existing option of list 1 (classification) |
+| `membershipDate` | `per_MembershipDate` | `YYYY-MM-DD` or `null` |
+| `friendDate` | `per_FriendDate` | `YYYY-MM-DD` or `null` |
 
-Textes : espaces de début et de fin retirés, balises HTML refusées. Un
-jour de naissance impossible (31 février…) est refusé quand jour et mois
-sont envoyés ensemble.
+Texts: leading and trailing spaces removed, HTML tags rejected. An
+impossible birth day (February 31…) is rejected when day and month
+are sent together.
 
-Les libellés des listes 1 et 2 se règlent dans ChurchCRM. L'application
-appelante fait sa propre correspondance (par exemple statut « membre » →
+The labels of lists 1 and 2 are set in ChurchCRM. The calling
+application does its own mapping (for example status "member" →
 classification `1`).
 
-### `POST /family` et `PATCH /family/{id}`
+### `POST /family` and `PATCH /family/{id}`
 
-Mêmes règles que pour les personnes. `externalId` et `name` obligatoires à
-la création.
+Same rules as for persons. `externalId` and `name` required on
+creation.
 
-| Champ JSON | Colonne | Règle |
+| JSON field | Column | Rule |
 |---|---|---|
-| `name` | `fam_Name` | texte, 50 max, non vide |
-| `address1`, `address2` | `fam_Address1`, `fam_Address2` | texte, 255 max |
-| `city`, `state`, `zip`, `country` | `fam_City`… | texte, 50 max |
-| `homePhone` | `fam_HomePhone` | texte, 30 max |
-| `email` | `fam_Email` | e-mail valide, 100 max |
-| `weddingDate` | `fam_WeddingDate` | `AAAA-MM-JJ` ou `null` |
+| `name` | `fam_Name` | text, 50 max, non-empty |
+| `address1`, `address2` | `fam_Address1`, `fam_Address2` | text, 255 max |
+| `city`, `state`, `zip`, `country` | `fam_City`… | text, 50 max |
+| `homePhone` | `fam_HomePhone` | text, 30 max |
+| `email` | `fam_Email` | valid email, 100 max |
+| `weddingDate` | `fam_WeddingDate` | `YYYY-MM-DD` or `null` |
 
 ### `PATCH /person/{id}/properties`
 
-Pose ou retire les propriétés « Ne pas contacter » réglées dans ChurchCRM
-(Admin → E-mail, `iDoNotEmailPropertyId` et `iDoNotSmsPropertyId`). L'API
-ChurchCRM équivalente (`/api/people/properties/…`) exige le droit « Menu
-Options » ; ici EditRecords suffit.
+Sets or removes the "Do not contact" properties set in ChurchCRM
+(Admin → Email, `iDoNotEmailPropertyId` and `iDoNotSmsPropertyId`). The equivalent
+ChurchCRM API (`/api/people/properties/…`) requires the "Menu
+Options" permission; here EditRecords is enough.
 
-Corps JSON : `{ "doNotEmail": true }`, `{ "doNotSms": false }` ou les deux.
-Valeurs booléennes seulement. Idempotent : poser une propriété déjà posée ou
-retirer une propriété absente ne change rien.
+JSON body: `{ "doNotEmail": true }`, `{ "doNotSms": false }` or both.
+Boolean values only. Idempotent: setting a property already set or
+removing an absent property changes nothing.
 
-- `422` : champ inconnu, valeur non booléenne, corps vide.
-- `503` : la propriété demandée n'est pas réglée dans ChurchCRM, ou l'id
-  réglé ne désigne pas une propriété de personne.
+- `422`: unknown field, non-boolean value, empty body.
+- `503`: the requested property is not set in ChurchCRM, or the configured
+  id does not point to a person property.
 
-Réponse `200` : `{ "success": true, "id": 123, "updated": ["doNotEmail"] }`.
-`DateLastEdited` / `EditedBy` de la fiche sont mis à jour.
+Response `200`: `{ "success": true, "id": 123, "updated": ["doNotEmail"] }`.
+The record's `DateLastEdited` / `EditedBy` are updated.
 
 ### `GET /lists/{id}`
 
-Options d'une liste ChurchCRM, triées par ordre d'affichage : `1`
-classification (`per_cls_ID`), `2` rôle familial (`per_fmr_ID`)… Sert à
-l'application externe pour vérifier ses correspondances.
+Options of a ChurchCRM list, sorted by display order: `1`
+classification (`per_cls_ID`), `2` family role (`per_fmr_ID`)… Used by
+the external application to check its mappings.
 
 ```json
 { "success": true, "listId": 2, "count": 4, "items": [
   { "id": 1, "name": "Head of Household", "sequence": 1 }, { "id": 2, "name": "Spouse", "sequence": 2 } ] }
 ```
 
-`404` si la liste n'existe pas ou est vide.
+`404` if the list does not exist or is empty.
 
 ### `POST /events`, `PATCH /events/{id}`, `DELETE /events/{id}`
 
-Événements du calendrier (`events_event`). L'API ChurchCRM 7.8.0 ne renvoie
-pas l'identifiant d'un événement créé et exige des champs annexes ; ces
-routes font le minimum avec le droit « Add Event ».
+Calendar events (`events_event`). The ChurchCRM 7.8.0 API does not return
+the ID of a created event and requires extra fields; these
+routes do the minimum with the "Add Event" permission.
 
-Champs : `title` (255, non vide), `typeId` (type existant), `start` et `end`
-(`AAAA-MM-JJ HH:MM:SS`, fin après début), `desc` (255), `text`, `active`
-(booléen). Création : les quatre premiers obligatoires. Modification :
-seulement les champs envoyés. Pas de HTML dans `title`, `desc` et `text`.
+Fields: `title` (255, non-empty), `typeId` (existing type), `start` and `end`
+(`YYYY-MM-DD HH:MM:SS`, end after start), `desc` (255), `text`, `active`
+(boolean). Creation: the first four are required. Update:
+only the fields sent. No HTML in `title`, `desc` and `text`.
 
 - `POST` → `201 { "success": true, "id": 12 }`
 - `PATCH` → `200 { "success": true, "id": 12 }`
-- `DELETE` → `200 { "success": true, "id": 12, "deleted": true }` ; `409` si des
-  personnes sont encore pointées ou qu'un kiosque utilise l'événement.
-- `403` sans « Add Event », `404` introuvable, `422` validation.
+- `DELETE` → `200 { "success": true, "id": 12, "deleted": true }`; `409` if
+  persons are still checked in or a kiosk uses the event.
+- `403` without "Add Event", `404` not found, `422` validation.
 
-`/ping` indique `addEvent` depuis 0.7.1.
+`/ping` reports `addEvent` since 0.7.1.
 
 ### `GET /events/{id}/attendance`
 
-Présences enregistrées sur un événement (`event_attend`), hors groupe exclu.
-`GET /api/events/{id}/roster` de ChurchCRM ne renvoie que les membres des
-groupes liés à l'événement ; cette route renvoie toutes les personnes
-pointées, par exemple par `POST /api/events/{id}/checkin` (droit « Add
-Event » dans ChurchCRM, module Événements activé).
+Attendance recorded on an event (`event_attend`), excluding the excluded group.
+ChurchCRM's `GET /api/events/{id}/roster` only returns the members of the
+groups linked to the event; this route returns all persons
+checked in, for example by `POST /api/events/{id}/checkin` ("Add
+Event" permission in ChurchCRM, Events module enabled).
 
 ```json
 { "success": true,
-  "event": { "id": 7, "title": "Culte", "start": "2026-10-18 10:30:00", "end": "2026-10-18 12:00:00", "active": true },
+  "event": { "id": 7, "title": "Sunday service", "start": "2026-10-18 10:30:00", "end": "2026-10-18 12:00:00", "active": true },
   "count": 1, "items": [ { "personId": 12, "checkinDate": "2026-10-18 10:32:10", "checkoutDate": null } ] }
 ```
 
-`404` si l'événement n'existe pas.
+`404` if the event does not exist.
 
-### `GET /person/{id}/custom` et `GET /family/{id}/custom`
+### `GET /person/{id}/custom` and `GET /family/{id}/custom`
 
-Champs que le compte a le droit de voir, sauf l'identifiant externe :
+Fields the account is allowed to see, except the external ID:
 
 ```json
 { "success": true, "id": 123, "fields": { "c4": { "name": "IBAN", "value": "FR76…" } } }
 ```
 
-### `PATCH /person/{id}/custom` et `PATCH /family/{id}/custom`
+### `PATCH /person/{id}/custom` and `PATCH /family/{id}/custom`
 
-Corps JSON : codes de champ → valeur, par exemple
-`{ "c4": "FR76…", "c5": "Jean Dupont" }`. `null` ou `""` vide le champ.
+JSON body: field codes → value, for example
+`{ "c4": "FR76…", "c5": "John Smith" }`. `null` or `""` clears the field.
 
-| Type ChurchCRM | Valeur JSON |
+| ChurchCRM type | JSON value |
 |---|---|
-| 1 Vrai / faux | `true` ou `false` |
-| 2 Date | `"AAAA-MM-JJ"` |
-| 3, 4, 5 Texte 50 / 100 / long | texte, longueur max du type, sans balise HTML |
-| 6 Année | entier sur 4 chiffres |
-| 8 Nombre | entier |
-| 10 Montant | nombre, arrondi à 2 décimales |
-| 11 Téléphone | texte, 30 max |
-| 12 Liste déroulante | entier, option existante de la liste du champ |
-| 7 Saison, 9 Personne d'un groupe | refusés en 0.3.0 |
+| 1 True / false | `true` or `false` |
+| 2 Date | `"YYYY-MM-DD"` |
+| 3, 4, 5 Text 50 / 100 / long | text, max length of the type, no HTML tag |
+| 6 Year | 4-digit integer |
+| 8 Number | integer |
+| 10 Money | number, rounded to 2 decimals |
+| 11 Phone | text, 30 max |
+| 12 Drop-down list | integer, existing option of the field's list |
+| 7 Season, 9 Person from a group | rejected in 0.3.0 |
 
-- Code inconnu ou champ d'identifiant externe : `422`.
-- Écriture en `INSERT … ON DUPLICATE KEY UPDATE` sur `person_custom` /
-  `family_custom`, comme l'import CSV de ChurchCRM, puis mise à jour de
-  `DateLastEdited` / `EditedBy` sur la fiche, dans la même transaction.
+- Unknown code or external ID field: `422`.
+- Written with `INSERT … ON DUPLICATE KEY UPDATE` on `person_custom` /
+  `family_custom`, like ChurchCRM's CSV import, then `DateLastEdited` /
+  `EditedBy` updated on the record, in the same transaction.
 
-Réponse `200` : `{ "success": true, "id": 123, "updated": ["c4", "c5"] }`.
+Response `200`: `{ "success": true, "id": 123, "updated": ["c4", "c5"] }`.
 
-## Erreurs
+## Errors
 
-Corps : `{ "success": false, "error": "…", "fields": { "email": "format invalide" } }`
-(`fields` seulement quand l'erreur porte sur des champs).
+Body: `{ "success": false, "error": "…", "fields": { "email": "invalid format" } }`
+(`fields` only when the error is about fields).
 
-| Code | Cas |
+| Code | Case |
 |---|---|
-| `400` | Corps absent, JSON illisible ou tableau au lieu d'un objet |
-| `401` | Clé invalide (géré par ChurchCRM) |
-| `302` | Clé absente : ChurchCRM redirige vers sa page de connexion. Le client ne suit pas les redirections et traite ce cas comme un échec d'authentification |
-| `403` | Droit manquant, sur la route ou sur un champ personnalisé |
-| `404` | Personne ou famille introuvable |
-| `422` | Validation, champ inconnu, aucun champ envoyé |
-| `500` | Erreur interne (`"Erreur interne"`, détails dans le log de ChurchCRM) |
-| `503` | Plugin non configuré (champ d'identifiant externe absent ou en double) |
+| `400` | Missing body, unreadable JSON, or array instead of an object |
+| `401` | Invalid key (handled by ChurchCRM) |
+| `302` | Missing key: ChurchCRM redirects to its login page. The client does not follow redirects and treats this case as an authentication failure |
+| `403` | Missing permission, on the route or on a custom field |
+| `404` | Person or family not found |
+| `422` | Validation, unknown field, no field sent |
+| `500` | Internal error (`"Internal error"`, details in the ChurchCRM log) |
+| `503` | Plugin not configured (external ID field missing or duplicated) |
 
-Un champ JSON inconnu donne `422` : une faute de frappe ne doit pas passer
-en silence.
+An unknown JSON field gives `422`: a typo must not go through
+silently.
 
-## Données sensibles
+## Sensitive data
 
-- Les réponses et messages d'erreur ne renvoient jamais une valeur reçue,
-  seulement des noms de champs. Seule exception : `GET …/custom`, qui
-  renvoie les valeurs que le compte a le droit de lire.
-- Les logs du plugin ne contiennent que la route, la méthode et le type
-  d'exception avec son fichier et sa ligne. Jamais une valeur ni le message
-  d'une exception (une erreur SQL peut citer une valeur).
-- Les valeurs sensibles (IBAN…) passent dans le corps, jamais dans l'URL :
-  ChurchCRM journalise les chemins.
+- Responses and error messages never return a received value,
+  only field names. Only exception: `GET …/custom`, which
+  returns the values the account is allowed to read.
+- The plugin's logs only contain the route, the method and the
+  exception type with its file and line. Never a value nor the message
+  of an exception (an SQL error may quote a value).
+- Sensitive values (IBAN…) go in the body, never in the URL:
+  ChurchCRM logs the paths.
 
-## Hors plugin : API ChurchCRM existante
+## Outside the plugin: existing ChurchCRM API
 
-| Besoin | Route |
+| Need | Route |
 |---|---|
-| Activer ou désactiver une fiche | `POST /api/person/{id}/activate/{true\|false}`, idem `family` |
-| Refus de contact e-mail / SMS | Depuis 0.7.1 : `PATCH /person/{id}/properties` du plugin. L'API ChurchCRM `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` exige le droit « Menu Options » |
-| Lire une fiche | `GET /api/person/{id}`, `GET /api/family/{id}` |
-| Supprimer | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
-| Notes, photo | routes `note` et `photo` existantes |
+| Activate or deactivate a record | `POST /api/person/{id}/activate/{true\|false}`, same for `family` |
+| Email / SMS contact opt-out | Since 0.7.1: the plugin's `PATCH /person/{id}/properties`. The ChurchCRM API `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` requires the "Menu Options" permission |
+| Read a record | `GET /api/person/{id}`, `GET /api/family/{id}` |
+| Delete | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
+| Notes, photo | existing `note` and `photo` routes |
 
-Ne pas désactiver la fiche personne liée au compte de service : ChurchCRM
-bloque alors sa clé API.
+Do not deactivate the person record linked to the service account: ChurchCRM
+then blocks its API key.
 
-## Mise à jour du plugin
+## Upgrading the plugin
 
-L'installeur de ChurchCRM n'écrase jamais un plugin installé : désinstaller
-l'ancienne version (Admin → Plugins), puis installer la nouvelle par URL
-avec son SHA-256. La désinstallation efface les réglages du plugin.
+The ChurchCRM installer never overwrites an installed plugin: uninstall
+the old version (Admin → Plugins), then install the new one from its URL
+with its SHA-256. Uninstalling erases the plugin settings.
 
-Depuis 0.8.0, le plugin s'appelle Custom Routes : id `custom-routes`, routes
-sous `/plugins/custom-routes`. L'ancien id `people-sync` est un autre
-plugin pour ChurchCRM : installer `custom-routes`, ressaisir ses réglages,
-changer l'URL de base de l'application appelante, puis désinstaller
+Since 0.8.0, the plugin is called Custom Routes: id `custom-routes`, routes
+under `/plugins/custom-routes`. The old id `people-sync` is a different
+plugin for ChurchCRM: install `custom-routes`, enter its settings again,
+change the base URL in the calling application, then uninstall
 `people-sync`.
 
 ## Tests
 
-Syntaxe : `php -l` en PHP 8.4 (version exigée par ChurchCRM 7.8.0), par
-exemple avec `docker run --rm -v "$PWD":/app -w /app php:8.4-cli php -l …`.
+Syntax: `php -l` with PHP 8.4 (version required by ChurchCRM 7.8.0), for
+example with `docker run --rm -v "$PWD":/app -w /app php:8.4-cli php -l …`.
 
-Comportement : appels HTTP sur l'instance, avant tout import de données
-réelles, avec des fiches de test supprimées ensuite. Un scénario par ligne
-des tableaux « Erreurs » et « Idempotence », plus un aller-retour
-`POST` → `PATCH` → `GET` par route.
+Behavior: HTTP calls on the instance, before any import of real
+data, with test records deleted afterwards. One scenario per row
+of the "Errors" and "Idempotent creation" tables, plus a
+`POST` → `PATCH` → `GET` round trip per route.

@@ -6,22 +6,22 @@ use ChurchCRM\model\ChurchCRM\FamilyQuery;
 use ChurchCRM\model\ChurchCRM\ListOptionQuery;
 
 /**
- * Champs JSON acceptés pour les personnes et les familles, leurs règles et
- * le setter Propel correspondant.
+ * JSON fields accepted for persons and families, their rules and the
+ * matching Propel setter.
  */
 class RecordSchema
 {
-    /** Liste ChurchCRM des classifications (membre, visiteur…). */
+    /** ChurchCRM list of classifications (member, visitor…). */
     private const LIST_CLASSIFICATION = 1;
 
-    /** Liste ChurchCRM des rôles familiaux. */
+    /** ChurchCRM list of family roles. */
     private const LIST_FAMILY_ROLE = 2;
 
     /**
-     * Règles : [setter, type, paramètre, obligatoire].
-     * Types : text (paramètre = longueur max), email (longueur max),
-     * int (paramètre = [min, max]), date, year, familyId, listOption
-     * (paramètre = id de liste).
+     * Rules: [setter, type, parameter, required].
+     * Types: text (parameter = max length), email (max length),
+     * int (parameter = [min, max]), date, year, familyId, listOption
+     * (parameter = list id).
      */
     private const PERSON = [
         'title'            => ['setTitle', 'text', 50, false],
@@ -65,13 +65,13 @@ class RecordSchema
     ];
 
     /**
-     * Valide un corps JSON et renvoie [setter => valeur normalisée].
+     * Validates a JSON body and returns [setter => normalized value].
      *
-     * @param array<string, mixed> $body sans la clé externalId
+     * @param array<string, mixed> $body without the externalId key
      *
      * @return array<string, mixed>
      *
-     * @throws HttpException 422 si un champ est inconnu ou invalide
+     * @throws HttpException 422 if a field is unknown or invalid
      */
     public static function validate(string $kind, array $body, bool $isCreate): array
     {
@@ -81,7 +81,7 @@ class RecordSchema
 
         foreach ($body as $key => $value) {
             if (!isset($rules[$key])) {
-                $errors[$key] = 'champ inconnu';
+                $errors[$key] = 'unknown field';
                 continue;
             }
             [$setter, $type, $param, $required] = $rules[$key];
@@ -97,7 +97,7 @@ class RecordSchema
         if ($isCreate) {
             foreach ($rules as $key => [, , , $required]) {
                 if ($required && !array_key_exists($key, $body)) {
-                    $errors[$key] = 'obligatoire';
+                    $errors[$key] = 'required';
                 }
             }
         }
@@ -107,7 +107,7 @@ class RecordSchema
         }
 
         if (!empty($errors)) {
-            throw new HttpException(422, 'Données invalides', $errors);
+            throw new HttpException(422, 'Invalid data', $errors);
         }
 
         return $values;
@@ -123,12 +123,12 @@ class RecordSchema
     {
         if ($value === null) {
             if ($required) {
-                $error = 'ne peut pas être vide';
+                $error = 'cannot be empty';
 
                 return null;
             }
 
-            // NULL vide le champ ; les colonnes entières NOT NULL valent 0.
+            // NULL clears the field; NOT NULL integer columns get 0.
             return in_array($type, ['int', 'familyId', 'listOption'], true) ? 0 : null;
         }
 
@@ -136,30 +136,30 @@ class RecordSchema
             case 'text':
             case 'email':
                 if (!is_string($value)) {
-                    $error = 'texte attendu';
+                    $error = 'text expected';
 
                     return null;
                 }
                 $value = trim($value);
                 if ($value !== strip_tags($value)) {
-                    $error = 'balises HTML interdites';
+                    $error = 'HTML tags not allowed';
 
                     return null;
                 }
                 if ($value === '') {
                     if ($required) {
-                        $error = 'ne peut pas être vide';
+                        $error = 'cannot be empty';
                     }
 
                     return null;
                 }
                 if (mb_strlen($value) > $param) {
-                    $error = "{$param} caractères maximum";
+                    $error = "{$param} characters maximum";
 
                     return null;
                 }
                 if ($type === 'email' && filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-                    $error = 'format invalide';
+                    $error = 'invalid format';
 
                     return null;
                 }
@@ -168,7 +168,7 @@ class RecordSchema
 
             case 'int':
                 if (!is_int($value) || $value < $param[0] || $value > $param[1]) {
-                    $error = "entier de {$param[0]} à {$param[1]} attendu";
+                    $error = "integer from {$param[0]} to {$param[1]} expected";
 
                     return null;
                 }
@@ -178,7 +178,7 @@ class RecordSchema
             case 'year':
                 $max = (int) date('Y');
                 if (!is_int($value) || $value < 1900 || $value > $max) {
-                    $error = "année de 1900 à {$max} attendue";
+                    $error = "year from 1900 to {$max} expected";
 
                     return null;
                 }
@@ -187,7 +187,7 @@ class RecordSchema
 
             case 'date':
                 if (!is_string($value) || !self::isIsoDate($value)) {
-                    $error = 'date AAAA-MM-JJ attendue';
+                    $error = 'YYYY-MM-DD date expected';
 
                     return null;
                 }
@@ -196,12 +196,12 @@ class RecordSchema
 
             case 'familyId':
                 if (!is_int($value) || $value < 0) {
-                    $error = 'identifiant de famille attendu';
+                    $error = 'family ID expected';
 
                     return null;
                 }
                 if ($value > 0 && FamilyQuery::create()->findPk($value) === null) {
-                    $error = 'famille introuvable';
+                    $error = 'family not found';
 
                     return null;
                 }
@@ -210,12 +210,12 @@ class RecordSchema
 
             case 'listOption':
                 if (!is_int($value) || $value < 0) {
-                    $error = 'identifiant d\'option attendu';
+                    $error = 'option ID expected';
 
                     return null;
                 }
                 if ($value > 0 && !self::listOptionExists($param, $value)) {
-                    $error = 'option introuvable';
+                    $error = 'option not found';
 
                     return null;
                 }
@@ -223,7 +223,7 @@ class RecordSchema
                 return $value;
         }
 
-        $error = 'type non géré';
+        $error = 'unsupported type';
 
         return null;
     }
@@ -244,8 +244,8 @@ class RecordSchema
     }
 
     /**
-     * Refuse un jour impossible (31 février…) quand jour, mois et année
-     * sont tous envoyés.
+     * Rejects an impossible day (February 31…) when day, month and year
+     * are all sent.
      *
      * @param array<string, mixed>  $body
      * @param array<string, string> $errors
@@ -256,7 +256,7 @@ class RecordSchema
         $month = $body['birthMonth'] ?? 0;
         $year = $body['birthYear'] ?? null;
         if ($day > 0 && $month > 0 && !checkdate($month, $day, $year ?? 2000)) {
-            $errors['birthDay'] = 'date de naissance impossible';
+            $errors['birthDay'] = 'impossible birth date';
         }
     }
 }

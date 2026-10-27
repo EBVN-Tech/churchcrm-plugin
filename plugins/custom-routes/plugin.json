@@ -1,7 +1,7 @@
 {
     "id": "custom-routes",
     "name": "Custom Routes",
-    "description": "Routes sur mesure que l'API ChurchCRM ne fournit pas, pour une application externe : listes, création idempotente, modification partielle, champs personnalisés, propriétés de contact, options de listes, présences et gestion des événements.",
+    "description": "Custom routes that the ChurchCRM API does not provide, for an external application: lists, idempotent creation, partial update, custom fields, contact properties, list options, attendance and event management.",
     "version": "0.8.0",
     "author": "Custom Routes",
     "authorUrl": "https://github.com/EBVN-Tech/churchcrm-plugin",
@@ -14,24 +14,24 @@
     "settings": [
         {
             "key": "personExternalIdField",
-            "label": "Champ d'identifiant externe (personnes)",
+            "label": "External ID field (persons)",
             "type": "text",
             "required": false,
-            "help": "Nom du champ personnalisé de personne qui reçoit l'identifiant externe. Vide : ext-id."
+            "help": "Name of the person custom field that holds the external ID. Empty: ext-id."
         },
         {
             "key": "familyExternalIdField",
-            "label": "Champ d'identifiant externe (familles)",
+            "label": "External ID field (families)",
             "type": "text",
             "required": false,
-            "help": "Nom du champ personnalisé de famille qui reçoit l'identifiant externe. Vide : ext-id."
+            "help": "Name of the family custom field that holds the external ID. Empty: ext-id."
         },
         {
             "key": "excludedGroupName",
-            "label": "Groupe exclu",
+            "label": "Excluded group",
             "type": "text",
             "required": false,
-            "help": "Nom exact d'un groupe ChurchCRM dont les membres (comptes techniques…) ne sont jamais renvoyés ni modifiables. Vide : aucun."
+            "help": "Exact name of a ChurchCRM group whose members (technical accounts…) are never returned or editable. Empty: none."
         }
     ],
     "menuItems": [],

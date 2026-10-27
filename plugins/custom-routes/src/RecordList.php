@@ -10,15 +10,14 @@ use ChurchCRM\model\ChurchCRM\PersonQuery;
 use ChurchCRM\model\ChurchCRM\RecordPropertyQuery;
 
 /**
- * Listes complètes des personnes et des familles, avec seulement les champs
- * utiles à un écran de liste. Pas de pagination : quelques centaines de
- * fiches tiennent dans une réponse. Pas de champ personnalisé (IBAN…) :
- * ceux-là se lisent fiche par fiche via …/custom.
+ * Full lists of persons and families, with only the fields useful to a
+ * list screen. No pagination: a few hundred records fit in one response.
+ * No custom field (IBAN…): those are read record by record via …/custom.
  */
 class RecordList
 {
     /**
-     * @param int[] $excludedIds personnes à ne jamais renvoyer
+     * @param int[] $excludedIds persons never to return
      *
      * @return array<int, array<string, mixed>>
      */
@@ -56,8 +55,8 @@ class RecordList
     }
 
     /**
-     * Familles avec leur nombre de membres (hors personnes exclues). Une
-     * famille dont tous les membres sont exclus n'est pas renvoyée.
+     * Families with their member count (excluded persons not counted). A
+     * family whose members are all excluded is not returned.
      *
      * @param int[] $excludedIds
      *
@@ -104,9 +103,9 @@ class RecordList
     }
 
     /**
-     * Identifiants des membres du groupe nommé, ou [] si le nom est vide.
+     * IDs of the members of the named group, or [] if the name is empty.
      *
-     * @return int[]|null null si un nom est réglé mais qu'aucun groupe ne le porte
+     * @return int[]|null null if a name is set but no group has it
      */
     public static function groupMemberIds(string $groupName): ?array
     {
@@ -126,8 +125,8 @@ class RecordList
     }
 
     /**
-     * Personnes portant la propriété désignée par un réglage ChurchCRM
-     * (iDoNotEmailPropertyId, iDoNotSmsPropertyId) : id => true.
+     * Persons that have the property designated by a ChurchCRM setting
+     * (iDoNotEmailPropertyId, iDoNotSmsPropertyId): id => true.
      *
      * @return array<int, true>
      */
