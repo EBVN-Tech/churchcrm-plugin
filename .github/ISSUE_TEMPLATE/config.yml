@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/EBVN-Tech/churchcrm-plugin/security/advisories/new
+    about: Report it privately, never in a public issue.
+  - name: Problem in ChurchCRM itself
+    url: https://github.com/ChurchCRM/CRM/issues
+    about: For bugs in ChurchCRM, not in a plugin from this repository.

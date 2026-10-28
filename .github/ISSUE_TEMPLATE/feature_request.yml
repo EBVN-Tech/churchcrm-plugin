@@ -1,0 +1,33 @@
+name: Feature request
+description: A route, setting or behavior that is missing.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Plugin
+      options:
+        - custom-routes
+        - New plugin
+    validations:
+      required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: What you need to do
+      description: The task you are trying to do, and why the plugin or ChurchCRM's API does not let you do it today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: For a route, the method, path, request and expected response. For a setting, its name and effect.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do today instead
+      description: Workarounds or other tools you use.

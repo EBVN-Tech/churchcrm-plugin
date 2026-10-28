@@ -101,6 +101,10 @@ scripts/check-report.sh /tmp/tools
 
 Behavior tests are HTTP calls against a test instance: see each plugin's specification.
 
+## Contributing
+
+Bug reports, feature requests and pull requests: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Security
 
 Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
