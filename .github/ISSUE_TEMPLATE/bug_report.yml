@@ -1,0 +1,88 @@
+name: Bug report
+description: Something in a plugin does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues are public. **Remove API keys, passwords and your members' personal data**
+        (names, emails, phones, addresses) from everything you paste below.
+        Security problem? Do not open an issue: see [SECURITY.md](https://github.com/EBVN-Tech/churchcrm-plugin/blob/main/SECURITY.md).
+
+  - type: dropdown
+    id: plugin
+    attributes:
+      label: Plugin
+      options:
+        - custom-routes
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: Admin → Plugins in ChurchCRM, or the `version` field of `/ping` for Custom Routes.
+      placeholder: 0.8.2
+    validations:
+      required: true
+
+  - type: input
+    id: churchcrm-version
+    attributes:
+      label: ChurchCRM version
+      placeholder: 7.8.0
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.4"
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did and what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: request
+    attributes:
+      label: Request and response
+      description: |
+        For Custom Routes: method and route, request body, HTTP status and response body.
+        Replace the key with `<key>` and the server with `https://<churchcrm>`.
+      render: shell
+      placeholder: |
+        curl -X PATCH -H "x-api-key: <key>" -H "Content-Type: application/json" \
+          -d '{"email": "jane@example.org"}' https://<churchcrm>/plugins/custom-routes/person/42
+        HTTP 422
+        {"success":false,"error":"Invalid data","fields":{"email":"invalid format"}}
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant lines from ChurchCRM's `logs/` folder, around the time of the problem.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I run the latest release of the plugin.
+          required: true
+        - label: I removed API keys, passwords and personal data from this issue.
+          required: true

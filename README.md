@@ -7,6 +7,7 @@
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-lideke-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/lideke)
 [![CI](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml)
 
 </div>
@@ -100,6 +101,10 @@ scripts/check-report.sh /tmp/tools
 ```
 
 Behavior tests are HTTP calls against a test instance: see each plugin's specification.
+
+## Contributing
+
+Bug reports, feature requests and pull requests: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
