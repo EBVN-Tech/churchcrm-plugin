@@ -12,8 +12,9 @@ A route is added when a need arises.
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
 [![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin?filter=custom-routes-*)](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes)
+[![CI](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml)
 
-[Quick start](#-quick-start) · [Routes](#-routes) · [Settings](#%EF%B8%8F-settings) · [Upgrade](#-upgrade) · [Build the zip](#-build-the-zip) · [Specification](docs/SPEC.md)
+[Quick start](#-quick-start) · [Routes](#-routes) · [Settings](#%EF%B8%8F-settings) · [Security](#%EF%B8%8F-security) · [Upgrade](#-upgrade) · [Build the zip](#-build-the-zip) · [Specification](docs/SPEC.md)
 
 </div>
 
@@ -30,7 +31,7 @@ or update them from an external application. Custom Routes adds what is missing,
 | ✏️ **Partial update** | `PATCH` only writes the fields sent. An unknown field gives `422`, never a silent omission. |
 | 🔐 **ChurchCRM permissions** | `x-api-key` key, permissions of the key's account, security of each custom field. |
 | 🙈 **Excluded group** | Technical accounts in a configured group are never returned or editable. |
-| 🧾 **History kept** | Writes go through the Propel models: ChurchCRM history notes and hooks included, never direct SQL. |
+| 🧾 **History kept** | Records are written through the Propel models: ChurchCRM history notes and hooks included. |
 
 ## 🚀 Quick start
 
@@ -83,6 +84,31 @@ API (see "Outside the plugin" in the [specification](docs/SPEC.md#outside-the-pl
 
 A field or group that is not found, or duplicated, makes the routes that depend on it
 answer `503`: no write without an external ID, no record that should have been hidden.
+
+## 🛡️ Security
+
+What the plugin can and cannot do:
+
+| Capability | Used | Detail |
+|---|---|---|
+| New HTTP routes | yes | only behind ChurchCRM's API key check; each write also checks the key account's permissions |
+| Database read | yes | persons, families, custom fields, lists, events, attendance |
+| Database write | yes | Propel models; custom field values with prepared SQL statements (values bound, column names taken from ChurchCRM's own field definitions) |
+| Outbound network calls | no | |
+| File system writes | no | |
+| Shell, `eval`, `unserialize` | no | |
+| Stored secrets | no | settings hold field and group names only |
+| ChurchCRM hooks, cron, UI injection | no | |
+
+Logs hold the route, the method and the error type, never a value received or an
+exception message.
+
+Each release PR carries a checks report on the exact content released: PHPStan against
+ChurchCRM 7.8.0, and ChurchCRM's [`plugin-scan.php`](https://github.com/ChurchCRM/CRM/blob/master/scripts/plugin-scan.php),
+the scan ChurchCRM maintainers run on community plugins (manifest, file types, dangerous
+functions, outbound hosts, file writes). CI runs the same checks on every change.
+
+Report a vulnerability privately: see [SECURITY.md](../../SECURITY.md).
 
 ## 🔼 Upgrade
 

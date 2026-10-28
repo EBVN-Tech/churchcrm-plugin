@@ -8,12 +8,6 @@ on:
 permissions:
   contents: read
 
-env:
-  CHURCHCRM_VERSION: 7.8.0
-  CHURCHCRM_SHA256: 0a2efd069bdeaa9535f76ca3e347f2e729890a8ad7951d7692fec0d060296fb1
-  PHPSTAN_VERSION: 2.3.3
-  PHPSTAN_SHA256: aa5cc7543f0de0ae7997deb24f654a3b2454b6ba4ba2c4552957a175886b60b1
-
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -30,20 +24,25 @@ jobs:
       - name: Each plugin's plugin.json
         run: php scripts/check-plugins.php
 
+      # ChurchCRM release (for PHPStan), PHPStan and ChurchCRM's plugin scan,
+      # pinned by SHA-256 in the script.
+      - name: Review tools
+        run: |
+          scripts/fetch-tools.sh "$RUNNER_TEMP/tools"
+          echo "CHURCHCRM_DIR=$RUNNER_TEMP/tools/churchcrm" >> "$GITHUB_ENV"
+
       # PHPStan analyses the plugins with ChurchCRM's code (classes, Propel
       # models, Slim): a missing import or a wrong call is rejected.
-      - name: ChurchCRM and PHPStan
-        run: |
-          cd "$RUNNER_TEMP"
-          curl -fsSL -o churchcrm.zip "https://github.com/ChurchCRM/CRM/releases/download/$CHURCHCRM_VERSION/ChurchCRM-$CHURCHCRM_VERSION.zip"
-          curl -fsSL -o phpstan.phar "https://github.com/phpstan/phpstan/releases/download/$PHPSTAN_VERSION/phpstan.phar"
-          echo "$CHURCHCRM_SHA256  churchcrm.zip" | sha256sum -c -
-          echo "$PHPSTAN_SHA256  phpstan.phar" | sha256sum -c -
-          unzip -q churchcrm.zip
-          echo "CHURCHCRM_DIR=$RUNNER_TEMP/churchcrm" >> "$GITHUB_ENV"
-
       - name: PHPStan
-        run: php -d memory_limit=1G "$RUNNER_TEMP/phpstan.phar" analyse --no-progress --error-format=github
+        run: php -d memory_limit=1G "$RUNNER_TEMP/tools/phpstan.phar" analyse --no-progress --error-format=github
+
+      # ChurchCRM's own review scan for community plugins: manifest, file
+      # types, dangerous functions, outbound hosts, file writes.
+      - name: ChurchCRM plugin scan
+        run: |
+          for dir in plugins/*/; do
+            php "$RUNNER_TEMP/tools/plugin-scan.php" "$dir"
+          done
 
       - name: Zip build check (not published)
         run: |

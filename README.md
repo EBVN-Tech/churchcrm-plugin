@@ -84,13 +84,19 @@ For each plugin, CI checks:
   to the folder name, `mainClass` and `routesFile` present, release-please entries;
 - the code with PHPStan (level 6), against the ChurchCRM 7.8.0 code: unknown class,
   missing import, wrong call;
+- ChurchCRM's `plugin-scan.php`, the review scan for community plugins: manifest, file
+  types, dangerous functions, outbound hosts, file writes;
 - the zip build.
 
-Locally, with the ChurchCRM release zip extracted into `<folder>`:
+The Release workflow runs the same checks on each release PR's branch and posts the
+report on the PR (`scripts/check-report.sh`): CI does not run on PRs opened by
+release-please.
+
+Locally:
 
 ```bash
-php scripts/check-plugins.php
-CHURCHCRM_DIR=<folder>/churchcrm phpstan analyse
+scripts/fetch-tools.sh /tmp/tools    # ChurchCRM, PHPStan, plugin-scan.php, pinned by SHA-256
+scripts/check-report.sh /tmp/tools
 ```
 
 Behavior tests are HTTP calls against a test instance: see each plugin's specification.
