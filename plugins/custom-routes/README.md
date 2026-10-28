@@ -75,6 +75,15 @@ Base: `/plugins/custom-routes`. Fields, responses and errors in detail: [`docs/S
 Reading, activating or deleting a record, notes and photo stay in the existing ChurchCRM
 API (see "Outside the plugin" in the [specification](docs/SPEC.md#outside-the-plugin-existing-churchcrm-api)).
 
+> ⚠️ **Limitation: custom field values are written directly to the database.**
+> ChurchCRM 7.8.0 offers no model, service or API to write custom field values: it stores
+> each field in a column it adds on the fly (`c1`, `c2`… in `person_custom` and
+> `family_custom`), which its Propel models do not know. The `/custom` routes and the
+> `externalId` lookup therefore use prepared SQL statements on these tables, like
+> ChurchCRM's own record editor and CSV import do. Values are validated against the
+> field's type and security first, but these writes add no history note and trigger no
+> ChurchCRM hook. Persons and families themselves are written through the Propel models.
+
 ## ⚙️ Settings
 
 | Key | Default | Purpose |
