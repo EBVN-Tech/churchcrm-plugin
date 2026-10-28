@@ -13,6 +13,7 @@ A route is added when a need arises.
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
 [![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin?filter=custom-routes-*)](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes)
 [![CI](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-lideke-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/lideke)
 
 [Quick start](#-quick-start) · [Routes](#-routes) · [Settings](#%EF%B8%8F-settings) · [Security](#%EF%B8%8F-security) · [Upgrade](#-upgrade) · [Build the zip](#-build-the-zip) · [Specification](docs/SPEC.md)
 
