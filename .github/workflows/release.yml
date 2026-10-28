@@ -15,8 +15,31 @@ jobs:
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
 
-      - if: steps.release.outputs.releases_created == 'true'
+      - if: steps.release.outputs.releases_created == 'true' || steps.release.outputs.prs_created == 'true'
         uses: actions/checkout@v7
+
+      - if: steps.release.outputs.prs_created == 'true'
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+
+      # PRs opened with GITHUB_TOKEN do not trigger the CI workflow: run the
+      # checks here, on each release PR's branch, and post them on the PR.
+      - name: Checks report on release PRs
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          scripts/fetch-tools.sh "$RUNNER_TEMP/tools"
+          echo "$PRS" | jq -r '.[] | "\(.number) \(.headBranchName)"' | while read -r number branch; do
+            git fetch -q --depth 1 origin "$branch"
+            git checkout -q FETCH_HEAD
+            scripts/check-report.sh "$RUNNER_TEMP/tools" > "$RUNNER_TEMP/report-$number.md"
+            git checkout -q -
+            gh pr comment "$number" --edit-last --body-file "$RUNNER_TEMP/report-$number.md" \
+              || gh pr comment "$number" --body-file "$RUNNER_TEMP/report-$number.md"
+          done
 
       - name: Zip and SHA-256 of released plugins
         if: steps.release.outputs.releases_created == 'true'
