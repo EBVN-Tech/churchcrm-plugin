@@ -23,6 +23,13 @@
 Each plugin is installed separately: Admin → Plugins → install from URL, with the URL of
 its release zip and its SHA-256. See the plugin's README.
 
+## ☕ Support
+
+These plugins are free and maintained on my own time. If one saved you time, you can buy
+me a coffee: it helps keep them tested on new ChurchCRM versions and add what churches ask for.
+
+<a href="https://buymeacoffee.com/lideke"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="50"></a>
+
 ## Layout
 
 ```

@@ -15,7 +15,7 @@ A route is added when a need arises.
 [![CI](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/EBVN-Tech/churchcrm-plugin/actions/workflows/ci.yml)
 [![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-lideke-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/lideke)
 
-[Quick start](#-quick-start) · [Routes](#-routes) · [Settings](#%EF%B8%8F-settings) · [Security](#%EF%B8%8F-security) · [Upgrade](#-upgrade) · [Build the zip](#-build-the-zip) · [Specification](docs/SPEC.md)
+[Quick start](#-quick-start) · [Routes](#-routes) · [Settings](#%EF%B8%8F-settings) · [Security](#%EF%B8%8F-security) · [Upgrade](#-upgrade) · [Build the zip](#-build-the-zip) · [Support](#-support) · [Specification](docs/SPEC.md)
 
 </div>
 
@@ -139,3 +139,10 @@ no hidden files) and prints its SHA-256. Releases are automatic: see
 
 Tests: `php -l` with PHP 8.4, then HTTP calls on a test instance (see
 "Tests" in the [specification](docs/SPEC.md#tests)).
+
+## ☕ Support
+
+Custom Routes is free and maintained on my own time. If it saved you time, you can buy me
+a coffee: it helps keep it tested on new ChurchCRM versions and add the routes churches ask for.
+
+<a href="https://buymeacoffee.com/lideke"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="50"></a>
