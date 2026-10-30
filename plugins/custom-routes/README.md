@@ -66,14 +66,18 @@ Base: `/plugins/custom-routes`. Fields, responses and errors in detail: [`docs/S
 | `GET` | `/{person,family}/{id}/custom` | reads the allowed custom fields | security of each field |
 | `PATCH` | `/{person,family}/{id}/custom` | writes custom fields | EditRecords + security of each field |
 | `PATCH` | `/person/{id}/properties` | sets or removes "Do not contact" (email, SMS) | EditRecords |
+| `PATCH` | `/person/{id}/note/{noteId}` | replaces the text of a public note, whoever wrote it | EditRecords |
 | `GET` | `/lists/{id}` | options of a ChurchCRM list (classification, family role…) | valid key |
 | `POST` | `/events` | creates an event | Add Event |
 | `PATCH` | `/events/{id}` | updates an event | Add Event |
 | `DELETE` | `/events/{id}` | deletes an event with no attendance | Add Event |
 | `GET` | `/events/{id}/attendance` | attendance of an event, excluding the excluded group | valid key |
 
-Reading, activating or deleting a record, notes and photo stay in the existing ChurchCRM
-API (see "Outside the plugin" in the [specification](docs/SPEC.md#outside-the-plugin-existing-churchcrm-api)).
+Reading, activating or deleting a record, reading and adding notes, and the photo stay in
+the existing ChurchCRM API (see "Outside the plugin" in the
+[specification](docs/SPEC.md#outside-the-plugin-existing-churchcrm-api)). Only *editing* a
+note needs the plugin: `PUT /api/note/{id}` accepts the author of the note or an
+administrator, so a service account cannot correct a note typed in ChurchCRM itself.
 
 > ⚠️ **Limitation: custom field values are written directly to the database.**
 > ChurchCRM 7.8.0 offers no model, service or API to write custom field values: it stores

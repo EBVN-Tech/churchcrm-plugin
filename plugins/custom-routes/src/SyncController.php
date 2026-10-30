@@ -12,6 +12,7 @@ use ChurchCRM\model\ChurchCRM\Family;
 use ChurchCRM\dto\SystemConfig;
 use ChurchCRM\model\ChurchCRM\FamilyQuery;
 use ChurchCRM\model\ChurchCRM\ListOptionQuery;
+use ChurchCRM\model\ChurchCRM\NoteQuery;
 use ChurchCRM\model\ChurchCRM\Map\PersonTableMap;
 use ChurchCRM\model\ChurchCRM\Person;
 use ChurchCRM\model\ChurchCRM\PersonQuery;
@@ -177,6 +178,58 @@ class SyncController
         $items = $kind === 'person' ? RecordList::persons($excludedIds) : RecordList::families($excludedIds);
 
         return [200, ['success' => true, 'count' => count($items), 'items' => $items]];
+    }
+
+    /**
+     * Replaces the text of a public note on a person's record. The ChurchCRM
+     * API (PUT /api/note/{id}) only lets the author of a note or an
+     * administrator edit it: an external application writing through a service
+     * account can therefore never correct a note typed in ChurchCRM itself.
+     * Here EditRecords is enough, as for other record changes.
+     *
+     * The previous text is lost: ChurchCRM keeps no history of a note, only
+     * the date and the author of the last edit.
+     *
+     * Private notes are left out on purpose: the plugin never returns them
+     * either, and they may hold what their author did not want to share.
+     *
+     * @param mixed $body
+     *
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function updateNote(int $personId, int $noteId, $body): array
+    {
+        $user = $this->currentUser();
+        if (!$user->isEditRecordsEnabled()) {
+            throw new HttpException(403, 'EditRecords permission required');
+        }
+        $body = $this->requireObject($body);
+        $unknown = array_diff(array_keys($body), ['text']);
+        if (!empty($unknown)) {
+            throw new HttpException(422, 'Invalid data', array_fill_keys($unknown, 'unknown field'));
+        }
+        $text = $body['text'] ?? null;
+        if (!is_string($text) || trim($text) === '') {
+            throw new HttpException(422, 'Invalid data', ['text' => 'required, non-empty string']);
+        }
+        // Checks the person too: an excluded record stays invisible, and the note must be one of theirs.
+        $record = $this->findRecord('person', $personId);
+
+        $note = NoteQuery::create()->findPk($noteId);
+        if ($note === null || (int) $note->getPerId() !== $personId || (int) $note->getPrivate() === 1) {
+            throw new HttpException(404, 'Note not found');
+        }
+
+        $note->setText($text);
+        $note->setDateLastEdited(date('YmdHis'));
+        $note->setEditedBy($user->getId());
+        $note->save();
+
+        $record->setDateLastEdited(date('YmdHis'));
+        $record->setEditedBy($user->getId());
+        $record->save();
+
+        return [200, ['success' => true, 'id' => $personId, 'noteId' => $noteId]];
     }
 
     /**
