@@ -8,7 +8,7 @@ Persons, families, custom fields, events and attendance, under
 `/plugins/custom-routes/`, for an external application (intranet, sync tool).
 A route is added when a need arises.
 
-![Version](https://img.shields.io/static/v1?label=version&message=0.8.2&color=blue) <!-- x-release-please-version -->
+![Version](https://img.shields.io/static/v1?label=version&message=0.9.0&color=blue) <!-- x-release-please-version -->
 ![ChurchCRM](https://img.shields.io/badge/ChurchCRM-%E2%89%A5%207.8.0-2a6db0)
 ![PHP](https://img.shields.io/badge/PHP-8.4-777bb4)
 [![Release](https://img.shields.io/github/v/release/EBVN-Tech/churchcrm-plugin?filter=custom-routes-*)](https://github.com/EBVN-Tech/churchcrm-plugin/releases?q=custom-routes)
