@@ -64,6 +64,9 @@ $app->get('/custom-routes/ping', function (Request $request, Response $response)
         'addRecords' => $user->isAddRecordsEnabled(),
         'editRecords' => $user->isEditRecordsEnabled(),
         'addEvent' => $user->isAddEventEnabled(),
+        // Capabilities, so a calling application can enable a feature as soon as the plugin
+        // is installed, without comparing version numbers or probing a route for a 404.
+        'noteEdit' => true,
         'configured' => $plugin->isConfigured(),
         'configurationError' => $plugin->getConfigurationError(),
         'excludedGroup' => $plugin->getExcludedGroupName(),
@@ -92,6 +95,12 @@ $app->delete('/custom-routes/events/{id:[0-9]+}', function (Request $request, Re
 // Attendance of an event (all checked-in persons, not only linked groups).
 $app->get('/custom-routes/events/{id:[0-9]+}/attendance', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
     return $respond($request, $response, fn () => $controller->eventAttendance((int) $args['id']));
+});
+
+// Replaces the text of a public note, whoever wrote it (the ChurchCRM API
+// reserves this to the author of the note or to an administrator).
+$app->patch('/custom-routes/person/{id:[0-9]+}/note/{noteId:[0-9]+}', function (Request $request, Response $response, array $args) use ($controller, $respond): Response {
+    return $respond($request, $response, fn () => $controller->updateNote((int) $args['id'], (int) $args['noteId'], $request->getParsedBody()));
 });
 
 // "Do not contact by email / SMS" properties of a person.

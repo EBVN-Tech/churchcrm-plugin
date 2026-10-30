@@ -1,4 +1,4 @@
-# Route specification — Custom Routes 0.8.0
+# Route specification — Custom Routes 0.9.0
 
 Target: ChurchCRM 7.8.0. Route base: `/plugins/custom-routes`.
 
@@ -94,10 +94,16 @@ records. The calling application sends its creations one at a time.
 ### `GET /ping`
 
 Since 0.7.1, the response adds `doNotEmailPropertyId` and `doNotSmsPropertyId` (integer, or `null` if not set).
+Since 0.9.0, it adds `noteEdit: true`: a calling application can turn a feature on as soon as
+the plugin is installed, without comparing version numbers or probing a route for a `404`.
 
 Checks the installation: `version`, `userId`, `addRecords`, `editRecords`,
 `configured`, `configurationError`, `excludedGroup` (configured name) and
 `excludedPersons` (number of hidden persons).
+
+`userId` is the ChurchCRM user behind the API key. It tells the calling application
+which notes it wrote itself, hence which ones the ChurchCRM API lets it edit
+(see `PATCH /person/{id}/note/{noteId}`).
 
 ### `GET /persons`
 
@@ -193,6 +199,26 @@ creation.
 | `homePhone` | `fam_HomePhone` | text, 30 max |
 | `email` | `fam_Email` | valid email, 100 max |
 | `weddingDate` | `fam_WeddingDate` | `YYYY-MM-DD` or `null` |
+
+### `PATCH /person/{id}/note/{noteId}`
+
+Since 0.9.0. Replaces the text of a **public** note on a person's record,
+whoever wrote it. The ChurchCRM API (`PUT /api/note/{id}`) only lets the
+author of a note or an administrator edit it: a calling application using a
+service account can therefore never correct, through the API, a note typed in
+ChurchCRM itself. Here EditRecords is enough, as for other record changes.
+
+JSON body: `{ "text": "<p>…</p>" }`. HTML, like the note routes of the
+ChurchCRM API. **The previous text is lost**: ChurchCRM keeps no history of a
+note, only the date and the author of the last edit.
+
+- `404`: unknown or excluded person, note that does not exist, that belongs to
+  another person, or that is private. Private notes are never returned by the
+  API to a non-author either: the plugin does not open them.
+- `422`: missing or empty `text`, unknown field.
+
+Response `200`: `{ "success": true, "id": 123, "noteId": 45 }`. The note's
+`DateLastEdited` / `EditedBy` are set, and so are the record's.
 
 ### `PATCH /person/{id}/properties`
 
@@ -330,7 +356,8 @@ silently.
 | Email / SMS contact opt-out | Since 0.7.1: the plugin's `PATCH /person/{id}/properties`. The ChurchCRM API `POST`/`DELETE /api/people/properties/person/{id}/{propertyId}` requires the "Menu Options" permission |
 | Read a record | `GET /api/person/{id}`, `GET /api/family/{id}` |
 | Delete | `DELETE /api/person/{id}`, `DELETE /api/family/{id}` |
-| Notes, photo | existing `note` and `photo` routes |
+| Read and add a note, photo | existing `note` and `photo` routes. `GET /api/person/{id}/notes` returns `enteredBy` for each note: the ChurchCRM user who wrote it |
+| Edit a note | Since 0.9.0: the plugin's `PATCH /person/{id}/note/{noteId}`. The ChurchCRM API `PUT /api/note/{id}` only accepts the author of the note or an administrator |
 
 Do not deactivate the person record linked to the service account: ChurchCRM
 then blocks its API key.
