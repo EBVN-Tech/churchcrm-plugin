@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/EBVN-Tech/churchcrm-plugin/compare/custom-routes-v0.8.2...custom-routes-v0.9.0) (2026-10-30)
+
+
+### Features
+
+* **custom-routes:** modifier le texte d'une note, quel qu'en soit l'auteur ([#16](https://github.com/EBVN-Tech/churchcrm-plugin/issues/16)) ([c7877c0](https://github.com/EBVN-Tech/churchcrm-plugin/commit/c7877c0fed332a21fff3b59bea81d7b100a93d0b))
+
 ## [0.8.2](https://github.com/EBVN-Tech/churchcrm-plugin/compare/custom-routes-v0.8.1...custom-routes-v0.8.2) (2026-10-28)
 
 
